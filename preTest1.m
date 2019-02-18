@@ -11,14 +11,20 @@ rng('shuffle');
 %  for (_i.e._ 80 points per hour), as a reference guide line for further 
 %  analysis
 
-WL = autoGen(21);
+WL = autoGen(14);
 
-[dtd,dtn,A] = alertness_gen(1,WL,'random','not');
-%load('data.mat')
+[dtd,dtn,A] = alertness_gen(2,WL,'random','not');
+
+% Possibility to use a expecific data--set
+% load('data.mat')
+
 %% Include noise to data
+%
+%
+%
 
-noise_nat = 'none';
-SNR = 20;
+noise_nat = 'white';
+SNR = 40;
 for i = 1 : length(dtd.y)
     if strcmp(noise_nat,'white')
         dtd.y{i} = awgn(dtd.y{i},SNR);
@@ -40,7 +46,9 @@ hold off;
 %% Determine the estimation data
 %
 %
-est_d = 14;
+%
+
+est_d = 7;
 
 dte.y = dtd.y(1:est_d); dte.t = dtd.t(1:est_d);
 dte.init = dtd.initial(1:est_d); dte.final = dtd.final(1:est_d); 
@@ -64,18 +72,16 @@ struc = struc_select('trivial');
 
 parameters = est_regr(dte,struc,'15');
 
-
 %% Simulate the alertness level
+%
+%
+%
 
-time.t = dte.valid.t;
-time.init = dte.valid.init;
+time.init = [dte.valid.t{1}(1), dte.valid.init(2:end)];
 time.final = dte.valid.final;
 initial = dte.valid.y{1}(1);
 
 dts = sim_system(parameters,time,initial);
-
-
-
 
 %% Figures Generation
 figure(4); 
@@ -106,11 +112,3 @@ for i = 1 : length(dts.y)
         plot(dts.tn{i},dts.nhom{i},'r--','LineWidth',1.6);    
     end
 end
-
-
-
-
-
-
-
-

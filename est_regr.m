@@ -136,7 +136,7 @@ function parameters = est_regr(dte,struc,version)
 %     rPhi = cell2mat(y_r)*pinv(rTheta);
 %     
 %     error_Phi = cell2mat(Phi) - rPhi;
-    %%
+    %% Retrieve the model parameters
                   
     par = par_retr(A,B,dte);    
     
@@ -195,7 +195,7 @@ function parameters = est_regr(dte,struc,version)
     % Estimate options
     maxITER = 200;
     options = optimoptions(@lsqnonlin,'Jacobian','off',...
-        'Display','iter','TolFun',1e-6,'MaxIter',maxITER,'TolX',1e-6);
+        'Display','off','TolFun',1e-6,'MaxIter',maxITER,'TolX',1e-6);
     initial = [10,25];
     
     func = @cost_function;
