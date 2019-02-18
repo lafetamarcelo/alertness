@@ -7,13 +7,13 @@ dts.tn = cell(length(time.initial),1);
 hom = zeros(length(time.initial),2);
 
 %% Parameters determination
-M = model.M;
-cphase = model.cphase;
-omega = model.omega;
-offset = model.offset;
-tau = model.tau;
-tau_e = model.tau_e;
-y_oo = model.y_oo;
+M = model.est.M;
+cphase = model.est.cphase;
+omega = model.est.omega;
+offset = model.est.offset;
+tau = model.est.tau;
+tau_e = model.est.tau_e;
+y_oo = model.est.y_oo;
 
 %%
 A = [0, 0, 0, 0;...

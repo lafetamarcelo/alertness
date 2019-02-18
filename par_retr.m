@@ -1,17 +1,21 @@
-function Par = par_retr(A, z0, dte)
+function parameters = par_retr(A, z0, dte)
 %UNTITLED Summary of this function goes here
 %   Detailed explanation goes here
 
 wind_s = length(dte.y);
 
-Par.Names{1} = 'Omega'; Par.Names{2} = 'Tau';
-Par.Names{3} = 'Phase'; Par.Names{4} = 'M';
-Par.Names{5} = 'h(0)';
-Par.TexNames{1} = '$$\omega_n$$'; Par.TexNames{2} = '$$\tau$$';
-Par.TexNames{3} = '$$\phi_{c}$$'; Par.TexNames{4} = '$$M$$';
-Par.TexNames{5} = '$$h(0)$$'; 
-Par.TexNames{6} = '$$A_{DC}$$'; Par.TexNames{7} = '$$y_{\infty}$$';
-Par.TexNames{8} = '$$\tau_{e}$$';
+parameters.Names{1} = 'Omega'; parameters.Names{2} = 'Tau';
+parameters.Names{3} = 'Phase'; parameters.Names{4} = 'M';
+parameters.Names{5} = 'h(0)';
+
+parameters.TexNames{1} = '$$\omega_n$$'; 
+parameters.TexNames{2} = '$$\tau$$';
+parameters.TexNames{3} = '$$\phi_{c}$$'; 
+parameters.TexNames{4} = '$$M$$';
+parameters.TexNames{5} = '$$h(0)$$'; 
+parameters.TexNames{6} = '$$A_{DC}$$'; 
+parameters.TexNames{7} = '$$y_{\infty}$$';
+parameters.TexNames{8} = '$$\tau_{e}$$';
 
 
 Par.EstStruc.A = A;
@@ -52,10 +56,20 @@ for k = 1 : wind_s
     Par.EstStruc.B{k} = z0{k};
     
 end
+
+
+parameters.est.omega = mean(Par.EstPar(:,1));
+parameters.est.tau = mean(Par.EstPar(:,2));
+parameters.est.cphase = mean(Par.EstPar(:,3));
+parameters.est.M = mean(Par.EstPar(:,4));
+parameters.est.h0 = Par.EstPar(:,5);
+parameters.est.offset = mean(Par.EstPar(:,6));
+
+parameters.est.struc = Par.EstStruc;
 %% Real parameters
 
 omega = double(pi/12); M = 2.52; tau = 1/0.0353; 
-cphase = double(-16.835*pi/12); dc_level = 0;
+cphase = double(-16.835*pi/12); dc_level = 2.4;
 y_oo = 14.3; tau_e = 2.6247;
 
 Par.RealStruc.A = [0, 0, 0, 0;...
@@ -74,4 +88,17 @@ for i = 1 : wind_s
                        (k1+dc_level+k2*tau)/tau;...
                         h0 + k1 + dc_level];
 end
+
+parameters.real.omega = mean(Par.RealPar(:,1));
+parameters.real.tau = mean(Par.RealPar(:,2));
+parameters.real.cphase = mean(Par.RealPar(:,3));
+parameters.real.M = mean(Par.RealPar(:,4));
+parameters.real.h0 = Par.RealPar(:,5);
+parameters.real.offset = mean(Par.RealPar(:,6));
+parameters.real.y_oo = 14.3;
+parameters.real.tau_e = 1/0.381;
+
+parameters.real.struc = Par.RealStruc;
+
+
 

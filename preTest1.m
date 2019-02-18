@@ -1,4 +1,4 @@
-%% preTest 6
+%% preTest 1 with DC level filtered by the build_moliform 4x4 model 
 
 clear;
 close all;
@@ -57,17 +57,55 @@ A.valid.An = A.An(est_d+1:end); A.valid.tn = A.tn(est_d+1:end);
 
 struc = struc_select('trivial');
 
-%% 
+%% Estimate the models parameters
+%
+%
+%
 
-parameters = est_dcinc(dte,struc,'16');
-
-[dts,j_c] = sim_alert_dc_inc(Parameters,dte,validation);
-
-
-
+parameters = est_regr(dte,struc,'15');
 
 
+%% Simulate the alertness level
 
+time.t = dte.valid.t;
+time.init = dte.valid.init;
+time.final = dte.valid.final;
+initial = dte.valid.y{1}(1);
+
+dts = sim_system(parameters,time,initial);
+
+
+
+
+%% Figures Generation
+figure(4); 
+subplot(3,1,1); hold on;
+plot(A.t,A.A,'-','Color',[.8 .8 .8]);
+subplot(3,1,2); hold on;
+plot(A.t,parameters.real.M*cos(parameters.real.omega*A.t + ...
+                                            parameters.real.cphase),...
+                                                   '-','Color',[.8 .8 .8]);
+subplot(3,1,3); hold on;
+plot(A.t,A.A - parameters.real.M*cos(parameters.real.omega*A.t + ...
+                                                parameters.real.cphase),...
+                                                   '-','Color',[.8 .8 .8]);
+for i = 1 : length(dts.y)
+    subplot(3,1,1); hold on;
+    plot(dts.td{i},dts.yd{i},'r--','LineWidth',1.6);
+    subplot(3,1,2); hold on;
+    plot(dts.td{i},dts.yd{i} - dts.dhom{i},'r--','LineWidth',1.6);
+    subplot(3,1,3); hold on;
+    plot(dts.td{i},dts.dhom{i},'r--','LineWidth',1.6);
+   
+    if i ~= length(dts.y)
+        subplot(3,1,1); hold on;
+        plot(dts.tn{i},dts.yn{i},'r--','LineWidth',1.6);
+        subplot(3,1,2); hold on;
+        plot(dts.tn{i},dts.yn{i} - dts.nhom{i},'r--','LineWidth',1.6);
+        subplot(3,1,3); hold on;
+        plot(dts.tn{i},dts.nhom{i},'r--','LineWidth',1.6);    
+    end
+end
 
 
 
