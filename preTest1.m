@@ -23,7 +23,7 @@ WL = autoGen(14);
 %
 %
 
-noise_nat = 'white';
+noise_nat = 'noNoise';
 SNR = 40;
 for i = 1 : length(dtd.y)
     if strcmp(noise_nat,'white')
@@ -63,7 +63,7 @@ A.valid.An = A.An(est_d+1:end); A.valid.tn = A.tn(est_d+1:end);
 %
 %
 
-struc = struc_select('trivial');
+struc = struc_select('barycenter',dte);
 
 %% Estimate the models parameters
 %

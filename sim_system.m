@@ -16,6 +16,9 @@ dts.circ = cell(length(time.init),1);
 dts.hom = cell(length(time.init),1);
 dts.t = cell(length(time.init),1);
 
+dts.yd = cell(length(time.init),1);
+dts.td = cell(length(time.init),1);
+
 hom = zeros(length(time.init)-1,2);
 
 sys = ss(parameters.est.struc.A,[],[0, 0, 0, 1],0);

@@ -194,7 +194,7 @@ function parameters = est_regr(dte,struc,version)
     
     % Estimate options
     maxITER = 200;
-    options = optimoptions(@lsqnonlin,'Jacobian','off',...
+    options = optimoptions(@lsqnonlin,'Jacobian','on',...
         'Display','off','TolFun',1e-6,'MaxIter',maxITER,'TolX',1e-6);
     initial = [10,25];
     
