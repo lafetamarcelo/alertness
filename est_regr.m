@@ -4,6 +4,7 @@ function parameters = est_regr(dte,struc,version)
     wind_s = length(dte.y);
     
     Phi = cell(wind_s,2+wind_s);
+    Phi_iv = cell(wind_s,2+wind_s);
     Y = cell(wind_s,1);
     Yr = cell(wind_s,1);
     %% Regression matrix
@@ -29,7 +30,9 @@ function parameters = est_regr(dte,struc,version)
         plot(error_graph,'Color',[.7 .7 .7]);
         
         Phi{w,2} = puls_out(ind(2:end),1);
+        Phi_iv{w,2} = puls_out(ind,1);
         X = puls_out(ind(2:end),2:4);
+        X_iv = puls_out(ind,2:4);
         
         % y(t) filtering - Output [L] informations
         t_calc = dte.t{w}-dte.t{w}(1);
@@ -49,15 +52,19 @@ function parameters = est_regr(dte,struc,version)
         plot(error_graph,'Color',[.4 .4 .4]);
         
         Phi{w,1} = [zeros(length(ind(2:end)),1),sig_out(ind(2:end),2:4)];
+        Phi_iv{w,1} = [zeros(length(ind),1),sig_out(ind,2:4)];
+        
         Y{w} = dte.y{w}(2:end);
         Yr{w} = sig_out(ind(2:end),5);
         
         % Shifting the window information
         for j = 1 : wind_s
             if w == j
-                Phi{w,j+2} = X(:,1:3); 
+                Phi{w,j+2} = X(:,1:3);
+                Phi_iv{w,j+2} = X_iv(:,1:3);
             else
                 Phi{w,j+2} = zeros(length(Phi{w,1}),3);
+                Phi_iv{w,j+2} = zeros(length(Phi_iv{w,1}),3);
             end
         end
         
@@ -76,7 +83,36 @@ function parameters = est_regr(dte,struc,version)
  
     Jr = (cell2mat(Yr) - cell2mat(Phi)*Thetar)'*(cell2mat(Yr) ...
                                - cell2mat(Phi)*Thetar)/length(cell2mat(Yr));
-    %% Parameters matrix reconstruction
+    
+   %% IV intro                        
+    
+    IV = cell2mat(Phi_iv)*Theta;
+    
+    figure(3); hold on;
+    plot(cell2mat(dte.y),'LineWidth',1.2,'Color',[.8 .8 .8]);
+    plot(IV,'r--');
+    
+    
+    Phi_iv = Phi;
+    in = 1;
+    
+    for w = 1 : length(dte.y)
+        
+        out = in + length(dte.y{w});
+        iv_sig = IV(in:out);
+        in = out + 1;
+        
+        t_calc = dte.t{w}-dte.t{w}(1);
+        [sig_out,~] =  sim_vs(reg_filt,0,iv_sig,t_calc,version);
+        
+        Phi_iv{w,1} = [zeros(length(sig_out(2:end)),1),sig_out(2:end,2:4)];
+    end
+    
+    Phi_iv = cell2mat(Phi_iv);
+    
+    Theta = (Phi_iv(:,2:end)'*Phi_t(:,2:end))\Phi_iv(:,2:end)'*cell2mat(Y);
+    Theta = [0;Theta];
+   %% Parameters matrix reconstruction
     
     L = Theta(1:4);
     
@@ -89,6 +125,10 @@ function parameters = est_regr(dte,struc,version)
     end
     
     A = struc.A + L*struc.C;
+    
+    
+    
+    
     
     %% Just for DEBUG
     

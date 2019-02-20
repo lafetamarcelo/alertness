@@ -62,14 +62,12 @@ A.valid.An = A.An(est_d+1:end); A.valid.tn = A.tn(est_d+1:end);
 %
 %
 %
-
 struc = struc_select('barycenter',dte);
 
 %% Estimate the models parameters
 %
 %
 %
-
 parameters = est_regr(dte,struc,'15');
 
 %% Simulate the alertness level
