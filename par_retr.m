@@ -78,7 +78,7 @@ Par.RealStruc.A = [0, 0, 0, 0;...
                    0, 0, 1, -1/tau];
 
 for i = 1 : wind_s
-    omega_t = omega*(dte.t{i}(1) - 24*(k-1));
+    omega_t = omega*(dte.t{i}(1) - 24*(i-1));
     h0 = dte.y{i}(1) - M*cos(omega_t  + cphase) - dc_level;
     k1 = M*cos(cphase+omega_t);
     k2 = -M*sin(cphase+omega_t)*omega;
@@ -100,5 +100,5 @@ parameters.real.tau_e = 1/0.381;
 
 parameters.real.struc = Par.RealStruc;
 
-
+end
 

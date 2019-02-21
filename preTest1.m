@@ -23,18 +23,39 @@ WL = autoGen(14);
 %
 %
 
-noise_nat = 'noNoise';
+noise_nat = 'white';
 SNR = 40;
-for i = 1 : length(dtd.y)
-    if strcmp(noise_nat,'white')
-        dtd.y{i} = awgn(dtd.y{i},SNR);
-    elseif strcmp(noise_nat,'colored')
-        e = filter(1,[1 -.9],randn(length(dtd.y{i}),1));
-        v = e*std(cell2mat(dtd.y))*10^(-SNR/20)/std(e);
-        e = v;
-        dtd.y{i} = dtd.y{i} + e; 
-    end
+to = cell2mat(dtd.t);
+
+if strcmp(noise_nat,'white')
+    e = cell2mat(dtd.y) - awgn(cell2mat(dtd.y),SNR,'measured');
+    yo = cell2mat(dtd.y) + e;
+elseif strcmp(noise_nat,'colored')
+    e = filter(1,[1 -.9],randn(length(cell2mat(dtd.y)),1));
+    v = e*std(cell2mat(dtd.y))*10^(-SNR/20)/std(e);
+    e = v;
+    yo = cell2mat(dtd.y) + e;
+elseif strcmp(noise_nat,'noNoise')
+    yo = cell2mat(dtd.y);
 end
+
+for w = 1 : length(dtd.y)
+   ind = find((to>=dtd.t{w}(1)).*(to<=dtd.t{w}(end)));
+   dtd.y{w} = yo(ind);
+end
+
+
+% 
+% for i = 1 : length(dtd.y)
+%     if strcmp(noise_nat,'white')
+%         dtd.y{i} = awgn(dtd.y{i},SNR,'measured');
+%     elseif strcmp(noise_nat,'colored')
+%         e = filter(1,[1 -.9],randn(length(dtd.y{i}),1));
+%         v = e*std(cell2mat(dtd.y))*10^(-SNR/20)/std(e);
+%         e = v;
+%         dtd.y{i} = dtd.y{i} + e; 
+%     end
+% end
 
 figure(1)
 plot(A.t,A.A,'-','Color',[.6 .6 .6]); hold on;
@@ -62,7 +83,7 @@ A.valid.An = A.An(est_d+1:end); A.valid.tn = A.tn(est_d+1:end);
 %
 %
 %
-struc = struc_select('barycenter',dte);
+struc = struc_select('trivial',dte);
 
 %% Estimate the models parameters
 %

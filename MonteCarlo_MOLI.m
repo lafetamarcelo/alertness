@@ -1,6 +1,6 @@
 %% Monte Carlo MOLI runs
 
-close all;
+%close all;
 clear;
 clc;
 set(0,'defaultfigurecolor',[1 1 1]);
@@ -16,7 +16,7 @@ J = cell(MCruns,1);
 %% Generate the data or load pre--saved ones
 
 WL = autoGen(14);
-[dtd,dtn,A] = alertness_gen(1,WL,'random','not');
+[dtd,dtn,A] = alertness_gen(2,WL,'random','not');
 %load('monte_data.mat');
 
 est_d = 7;
@@ -38,26 +38,31 @@ n_s = 1;
 for mc = 1 : MCruns
     
     rng('shuffle');
-
+    
     noise_nat = 'white';
     SNR = 40;
-    for i = 1 : length(dte.y)
-        if strcmp(noise_nat,'white')
-            P_s = sum(y_c{i}.*y_c{i})/length(y_c{i});
-            dte.y{i} = awgn(y_c{i},SNR,'measured');
-            noise = dte.y{i} - y_c{i};
-            P_n = sum(noise.*noise)/length(noise);
-            SNR_check(n_s) = 10*log10(P_s/P_n);
-            n_s = n_s + 1;
-        elseif strcmp(noise_nat,'colored')
-            e = filter(1,[1 -.9],randn(length(dte.y{i}),1));
-            v = e*std(cell2mat(dte.y))*10^(-SNR/20)/std(e);
-            e = v;
-            dte.y{i} = dte.y{i} + e; 
-        end
+    to = cell2mat(dte.t);
+
+    if strcmp(noise_nat,'white')
+        %e = cell2mat(y_c) - awgn(cell2mat(y_c),SNR);
+        e = idinput(length(cell2mat(y_c)),'rgs')*...
+                                          std(cell2mat(y_c))*10^(-SNR/20);
+        yo = cell2mat(y_c) + e;
+    elseif strcmp(noise_nat,'colored')
+        e = filter(1,[1 -.9],randn(length(cell2mat(y_c)),1));
+        v = e*std(cell2mat(y_c))*10^(-SNR/20)/std(e);
+        e = v;
+        yo = cell2mat(y_c) + e;
+    elseif strcmp(noise_nat,'noNoise')
+        yo = cell2mat(y_c);
+    end
+
+    for w = 1 : length(y_c)
+       ind = find((to>=dte.t{w}(1)).*(to<=dte.t{w}(end)));
+       dte.y{w} = yo(ind);
     end
     
-    struc{mc} = struc_select('barycenter',dte);
+    struc{mc} = struc_select('trivial',dte);
     
     par{mc} = est_regr(dte,struc{mc},'15');
 
@@ -77,8 +82,8 @@ for mc = 1 : MCruns
 end
 
 %% Signal to Noise Ratio Histogram
-figure(8); hold on;
-histogram(SNR_check,20);
+% figure(8); hold on;
+% histogram(SNR_check,20);
 
 %% Parameters error analisys
 

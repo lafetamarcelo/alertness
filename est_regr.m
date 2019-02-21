@@ -86,32 +86,31 @@ function parameters = est_regr(dte,struc,version)
     
    %% IV intro                        
     
-    IV = cell2mat(Phi_iv)*Theta;
+%     IV = cell2mat(Phi_iv)*Theta;
+%     
+%     figure(3); hold on;
+%     plot(cell2mat(dte.y),'LineWidth',1.2,'Color',[.8 .8 .8]);
+%     plot(IV,'r--');
     
-    figure(3); hold on;
-    plot(cell2mat(dte.y),'LineWidth',1.2,'Color',[.8 .8 .8]);
-    plot(IV,'r--');
-    
-    
-    Phi_iv = Phi;
-    in = 1;
-    
-    for w = 1 : length(dte.y)
-        
-        out = in + length(dte.y{w});
-        iv_sig = IV(in:out);
-        in = out + 1;
-        
-        t_calc = dte.t{w}-dte.t{w}(1);
-        [sig_out,~] =  sim_vs(reg_filt,0,iv_sig,t_calc,version);
-        
-        Phi_iv{w,1} = [zeros(length(sig_out(2:end)),1),sig_out(2:end,2:4)];
-    end
-    
-    Phi_iv = cell2mat(Phi_iv);
-    
-    Theta = (Phi_iv(:,2:end)'*Phi_t(:,2:end))\Phi_iv(:,2:end)'*cell2mat(Y);
-    Theta = [0;Theta];
+%     Phi_iv = Phi;
+%     in = 1;
+%     
+%     for w = 1 : length(dte.y)
+%         
+%         out = in + length(dte.y{w}) - 1;
+%         iv_sig = IV(in:out);
+%         in = out + 1;
+%         
+%         t_calc = dte.t{w}-dte.t{w}(1);
+%         [sig_out,~] =  sim_vs(reg_filt,0,iv_sig,t_calc,version);
+%         
+%         Phi_iv{w,1} = [zeros(length(sig_out(2:end,1)),1),sig_out(2:end,2:4)];
+%     end
+%     
+%     Phi_iv = cell2mat(Phi_iv);
+%     
+%     Theta = (Phi_iv(:,2:end)'*Phi_t(:,2:end))\Phi_iv(:,2:end)'*cell2mat(Y);
+%     Theta = [0;Theta];
    %% Parameters matrix reconstruction
     
     L = Theta(1:4);
@@ -125,10 +124,6 @@ function parameters = est_regr(dte,struc,version)
     end
     
     A = struc.A + L*struc.C;
-    
-    
-    
-    
     
     %% Just for DEBUG
     
