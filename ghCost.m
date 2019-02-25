@@ -62,15 +62,6 @@ for w = 1 : length(dte.y)
         dts.tn{w} = to + dte.final(w);
         dts.yn{w} = Sn + M*cos(omega*dts.tn{w} + cphase);
         dts.nhom{w} = Sn;
-        
-        %% DEBUG
-        figure(1); subplot(3,1,1); hold on;
-        plot(dts.tn{w},dts.yn{w},'b--');
-        figure(1); subplot(3,1,2); hold on;
-        plot(dts.tn{w},dts.nhom{w},'b--');
-        figure(1); subplot(3,1,3); hold on;
-        plot(dts.tn{w},dts.yn{w}-dts.nhom{w},'b--');
-        
         init = dts.yn{w}(end);
         
     end
@@ -78,7 +69,5 @@ for w = 1 : length(dte.y)
 end
  
 E = cell2mat(y_comp) - cell2mat(dte.y);
-
 J = (E'*E)/length(E);
-
 end

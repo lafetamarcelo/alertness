@@ -26,8 +26,8 @@ function parameters = est_regr(dte,struc,version)
            error_graph(i) = min(error);
         end
         
-        figure(2); subplot(2,1,1); hold on;
-        plot(error_graph,'Color',[.7 .7 .7]);
+        %figure(2); subplot(2,1,1); hold on;
+        %plot(error_graph,'Color',[.7 .7 .7]);
         
         Phi{w,2} = puls_out(ind(2:end),1);
         Phi_iv{w,2} = puls_out(ind,1);
@@ -48,8 +48,8 @@ function parameters = est_regr(dte,struc,version)
            error_graph(i) = error(ind(i));
         end
         
-        figure(2); subplot(2,1,2); hold on;
-        plot(error_graph,'Color',[.4 .4 .4]);
+        %figure(2); subplot(2,1,2); hold on;
+        %plot(error_graph,'Color',[.4 .4 .4]);
         
         Phi{w,1} = [zeros(length(ind(2:end)),1),sig_out(ind(2:end),2:4)];
         Phi_iv{w,1} = [zeros(length(ind),1),sig_out(ind,2:4)];
@@ -211,18 +211,18 @@ function parameters = est_regr(dte,struc,version)
             h.y{k-1}(1,2) = dts.hom{k}(1);
             h.t{k-1}(1,1) = dts.t{k}(1) - dts.t{k-1}(end); 
             %%DEBUG figure
-            subplot(3,1,3); hold on;
-            scatter(dts.t{k-1}(end),h.y{k-1}(1,1),'xr','LineWidth',1.8);
-            scatter(dts.t{k}(1),h.y{k-1}(1,2),'or','LineWidth',1.8);
+            %subplot(3,1,3); hold on;
+            %scatter(dts.t{k-1}(end),h.y{k-1}(1,1),'xr','LineWidth',1.8);
+            %scatter(dts.t{k}(1),h.y{k-1}(1,2),'or','LineWidth',1.8);
         end
         
         %% Just for DEBUG
-        figure(3); subplot(3,1,1); hold on;
-        plot(dts.t{k},dts.y{k},'k-','LineWidth',1.2);
-        subplot(3,1,2); hold on;
-        plot(dts.t{k},dts.circ{k},'k-','LineWidth',1.2);
-        subplot(3,1,3); hold on;
-        plot(dts.t{k},dts.hom{k},'k-','LineWidth',1.2);
+%         figure(3); subplot(3,1,1); hold on;
+%         plot(dts.t{k},dts.y{k},'k-','LineWidth',1.2);
+%         subplot(3,1,2); hold on;
+%         plot(dts.t{k},dts.circ{k},'k-','LineWidth',1.2);
+%         subplot(3,1,3); hold on;
+%         plot(dts.t{k},dts.hom{k},'k-','LineWidth',1.2);
     end
     
     %% Estimate the night parameters
