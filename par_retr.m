@@ -17,11 +17,17 @@ parameters.TexNames{6} = '$$A_{DC}$$';
 parameters.TexNames{7} = '$$y_{\infty}$$';
 parameters.TexNames{8} = '$$\tau_{e}$$';
 
-
+%%
 Par.EstStruc.A = A;
 
 tauhat = -1/A(4,4);
 omegahat = (-A(3,4))^.5;
+
+% tauhat_ = -1/A(4,4);
+% omegahat_ = (-A(3,4))^.5;
+% 
+% omegahat = (-A(2,4)*tauhat_)^.5;
+% tauhat = 1/(-A(2,4)/omegahat_^2);
 
 offset = z0{1}(1)*tauhat/omegahat^2;
 
@@ -66,6 +72,9 @@ parameters.est.h0 = Par.EstPar(:,5);
 parameters.est.offset = mean(Par.EstPar(:,6));
 
 parameters.est.struc = Par.EstStruc;
+
+parameters.est.omega_ = (-A(2,4)*tauhat)^.5;
+parameters.est.tau_ = 1/(-A(2,4)/omegahat^2);
 %% Real parameters
 
 omega = double(pi/12); M = 2.52; tau = 1/0.0353; 

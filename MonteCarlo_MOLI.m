@@ -116,6 +116,42 @@ end
 
 E = 100.*E;
 
+%% Error test
+E_ = zeros(MCruns,2);
+for mc = 1 : MCruns
+   E_(mc,1) = (par{mc}.est.omega_ - par{mc}.real.omega)/par{mc}.real.omega; 
+   E_(mc,2) = (par{mc}.est.tau_ - par{mc}.real.tau)/par{mc}.real.tau;  
+end
+
+E_ = 100.*E_;
+
+%% Structure errors
+
+E_a = zeros(MCruns,4);
+E_b = zeros(MCruns,4);
+for mc = 1 : MCruns
+    
+    error = zeros(4,1);
+    for j = 1 : length(dte.y)
+        error = error + abs(par{mc}.real.struc.B{j}...
+                            - par{mc}.est.struc.B{j})./...
+                                 abs(par{mc}.real.struc.B{j});
+    end
+    error = error ./ length(dte.y);
+    
+    for i = 1 : 4
+        E_b(mc,i) = error(i);
+        if i == 1
+            E_a(mc,i) = par{mc}.real.struc.A(i,4)...
+                            - par{mc}.est.struc.A(i,4);
+        else
+            E_a(mc,i) = (par{mc}.real.struc.A(i,4)...
+                            - par{mc}.est.struc.A(i,4))./...
+                                    abs(par{mc}.real.struc.A(i,4));
+        end
+    end
+end
+
 %% Plotting parameters error results
 
 figure(9); hold on;
@@ -141,3 +177,36 @@ title(['$$\overline{x} =',num2str(round(mean(E(:,9)),3)),...
 leg = 'DC + h(0)';
 %xlim([-100,100]);
 legend([{leg}],'Interpreter','latex'); hold off;
+
+figure(12); hold on;
+k = 1; z = 1;
+for i = 1:2:8
+    subplot(4,2,i); 
+    histogram(E_a(:,k),20); hold on;
+    title(['$$\overline{A}(',num2str(k),') =',...
+            num2str(round(mean(E_a(:,k)),3)),'\pm',...
+             num2str(round(std(E_a(:,k)),3)),'$$'],'Interpreter','latex');
+    xlim([-.5,.5]); hold off; k = k + 1;
+    
+    subplot(4,2,i+1);
+    histogram(E_b(:,z),20); hold on;
+    title(['$$\overline{B}(',num2str(z),') =',...
+            num2str(round(mean(E_b(:,z)),3)),'\pm',...
+             num2str(round(std(E_b(:,z)),3)),'$$'],'Interpreter','latex');
+    hold off; z = z + 1;
+end
+
+figure(13); hold on;
+subplot(2,1,1);
+histogram(E_(:,1),20); hold on;
+histogram(E(:,1),20); hold on;
+title(['$$\overline{\omega} =',num2str(round(mean(E_(:,1)),3)),...
+      '\pm',num2str(round(std(E_(:,1)),3)),'$$'],'Interpreter','latex');
+legend([{'Combined'},{'Direct'}],'Interpreter','latex'); hold off;
+
+subplot(2,1,2);
+histogram(E_(:,2),20); hold on;
+histogram(E(:,2),20); hold on;
+title(['$$\overline{\tau} =',num2str(round(mean(E_(:,2)),3)),...
+       '\pm',num2str(round(std(E_(:,2)),3)),'$$'],'Interpreter','latex');
+legend([{'Combined'},{'Direct'}],'Interpreter','latex'); hold off;
