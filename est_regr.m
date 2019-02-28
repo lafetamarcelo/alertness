@@ -78,12 +78,114 @@ function parameters = est_regr(dte,struc,version)
  
     J = (cell2mat(Y) - cell2mat(Phi)*Theta)'*(cell2mat(Y) ...
                                 - cell2mat(Phi)*Theta)/length(cell2mat(Y));
-                            
-    Thetar = pinv(cell2mat(Phi))*cell2mat(Yr);
- 
-    Jr = (cell2mat(Yr) - cell2mat(Phi)*Thetar)'*(cell2mat(Yr) ...
-                               - cell2mat(Phi)*Thetar)/length(cell2mat(Yr));
+
+    %% Introduction to residual modeling 
     
+    Ep = cell2mat(Y) - Phi_t*Theta;
+    
+    J_it = zeros(50,1);
+    for it = 1 : 50
+        
+        ind_i = 1;
+        Phi_e = cell(length(dte.y));
+     
+        for w = 1 : length(dte.y)
+            
+            t_calc = dte.t{w}(2:end);
+            ind_f = ind_i + length(t_calc) - 1;
+            [sig_out,~] =  sim_vs(reg_filt,0,Ep(ind_i:ind_f),...
+                                                           t_calc,version);
+            ind_i = ind_f + 1;
+            
+            for j = 1 : length(dte.y)
+                if j ~= w
+                    Phi_e{w,j} = zeros(length(t_calc),4);
+                else
+                    Phi_e{w,j} = sig_out(2:end,1:4);
+                end
+            end
+        end
+        
+        Phi_it = [cell2mat(Phi) , cell2mat(Phi_e)];
+        
+        Ph{it} = Phi_it;
+        
+        Theta_it = [0 ; Phi_it(:,2:end)\cell2mat(Y)];
+        
+        J_it(it) = (cell2mat(Y) - Phi_it*Theta_it)'*...
+                     (cell2mat(Y) - Phi_it*Theta_it)/length(cell2mat(Y));
+        
+        Th{it} = Theta_it;
+        Ep = cell2mat(Y) - Phi_it*Theta_it;
+    end
+                     
+    figure(19);
+    plot(1:50,J_it);
+    
+    [~,index] = min(J_it);
+    
+    m = size(cell2mat(Phi),2);
+    figure(20);
+    plot(cell2mat(Y)); hold on;
+    plot(Phi_it*Theta_it);
+    plot(cell2mat(Phi)*Th{index}(1:m));
+    
+    %% Introduction to the regularization
+%    
+%    reg = logspace(0,10,1000);
+%    
+%    Phi_t = Phi_t(:,2:end);
+%    
+%    I = eye(size(Phi_t,2));
+%    Jreg = zeros(length(reg),1);
+%    for k = 1 : length(reg)
+%                            
+%      Theta = (Phi_t'*Phi_t + reg(k)*I)\Phi_t'*cell2mat(Y);                    
+%      Theta = [0; Theta];                      
+%      
+%      L = Theta(1:4);
+%      B = cell(wind_s,1);
+%      for i = 1 : wind_s
+%         B{i}(1) = Theta(5); 
+%         B{i}(2) = Theta(6+3*(i-1)); 
+%         B{i}(3) = Theta(7+3*(i-1));
+%         B{i}(4) = Theta(8+3*(i-1));
+%      end
+%      A = struc.A + L*struc.C;
+%      
+%      par = par_retr(A,B,dte);
+%      
+%      y_c = cell(length(dte.valid.y),1);
+%      for w = 1 : length(dte.valid.y)
+%         time.init = dte.valid.t{w}(1);
+%         time.final = dte.valid.final(w);
+%         initial = dte.valid.y{w}(1);
+% 
+%         dts = sim_system(par,time,initial);
+%         
+%         ind = zeros(length(dte.valid.y{w}),1);
+%         for i = 1 : length(ind)
+%             error = abs(dte.valid.t{w}(i) - dts.td{1});
+%             [~, ind(i)] = min(error);
+%         end
+%         
+%         y_c{w} = dts.yd{1}(ind);
+%      end
+%      E = cell2mat(y_c) - cell2mat(dte.valid.y);
+%      
+%      Jreg(k) = (E'*E)/length(E);
+%    end 
+%    
+%    figure(15); 
+%    plot(reg,Jreg); hold on; set(gca, 'XScale', 'log', 'YScale', 'log')
+%    
+%    [~, ind_reg] = min(Jreg);
+%    
+%    reg_candy = reg(ind_reg);
+%    
+%    Theta = (Phi_t'*Phi_t + reg_candy*I)\Phi_t'*cell2mat(Y);                    
+%    Theta = [0; Theta];                      
+   
    %% IV intro                        
     
 %     IV = cell2mat(Phi_iv)*Theta;

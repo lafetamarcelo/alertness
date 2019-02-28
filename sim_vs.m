@@ -24,6 +24,8 @@ else
 end
 
 Tmax = .1*min(diff(t));
+if Tmax < 1e-05; Tmax = .001; end
+
 tsim = t(end);
 %tsim = 2*t(end);
 

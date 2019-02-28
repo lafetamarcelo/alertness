@@ -20,14 +20,13 @@ parameters.TexNames{8} = '$$\tau_{e}$$';
 %%
 Par.EstStruc.A = A;
 
-tauhat = -1/A(4,4);
+% Direct 
+%tauhat = -1/A(4,4);
 omegahat = (-A(3,4))^.5;
 
-% tauhat_ = -1/A(4,4);
-% omegahat_ = (-A(3,4))^.5;
-% 
+% Combined
 % omegahat = (-A(2,4)*tauhat_)^.5;
-% tauhat = 1/(-A(2,4)/omegahat_^2);
+tauhat = 1/(-A(2,4)/omegahat^2);
 
 offset = z0{1}(1)*tauhat/omegahat^2;
 
@@ -74,12 +73,12 @@ parameters.est.offset = mean(Par.EstPar(:,6));
 parameters.est.struc = Par.EstStruc;
 
 parameters.est.omega_ = (-A(2,4)*tauhat)^.5;
-parameters.est.tau_ = 1/(-A(2,4)/omegahat^2);
+parameters.est.tau_ =  -1/A(4,4);
 %% Real parameters
 
 omega = double(pi/12); M = 2.52; tau = 1/0.0353; 
 cphase = double(-16.835*pi/12); dc_level = 2.4;
-y_oo = 14.3; tau_e = 2.6247;
+y_oo = 14.3; tau_e = 1/0.381;
 
 Par.RealStruc.A = [0, 0, 0, 0;...
                    1, 0, 0, -omega^2/tau; ...
@@ -87,7 +86,7 @@ Par.RealStruc.A = [0, 0, 0, 0;...
                    0, 0, 1, -1/tau];
 
 for i = 1 : wind_s
-    omega_t = omega*(dte.t{i}(1) - 24*(i-1));
+    omega_t = omega*dte.t{i}(1);
     h0 = dte.y{i}(1) - M*cos(omega_t  + cphase) - dc_level;
     k1 = M*cos(cphase+omega_t);
     k2 = -M*sin(cphase+omega_t)*omega;

@@ -1,14 +1,15 @@
 function dts = sim_system(parameters,time,initial)
 
 %% Parameters light
-
 omega = parameters.est.omega;
 tau = parameters.est.tau;
 M = parameters.est.M;
 cphase = parameters.est.cphase;
 offset = parameters.est.offset;
-y_oo = parameters.est.y_oo;
-tau_e = parameters.est.tau_e;
+if length(time.init) ~= 1
+    y_oo = parameters.est.y_oo;
+    tau_e = parameters.est.tau_e;
+end
 
 %%
 dts.y = cell(length(time.init),1);

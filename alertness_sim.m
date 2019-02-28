@@ -1,10 +1,14 @@
-function [dts,dta] = alertness_sim(ppH,days,space,noise_nat,SNR)
+function [dts,dta] = alertness_sim(W,noise_nat,SNR,resolution,ind)
     
+    days = length(W(:,1));
+    
+    %
     dts.y = cell(days,1); dts.t = cell(days,1); 
     dts.dhom = cell(days,1); dta.dhom = cell(days,1);
     dta.yo = cell(days,1); dta.yd = cell(days,1);
     dta.td = cell(days,1); dta.yn = cell(days,1);
     dta.tn = cell(days,1); dta.nhom = cell(days,1);
+    dta.so = cell(days,1); dts.s = cell(days,1);
     
     %
     omega = pi/12; %omega
@@ -16,8 +20,6 @@ function [dts,dta] = alertness_sim(ppH,days,space,noise_nat,SNR)
     tau_e = 2.6247; %tau_e
 
     % 
-    W = autoGen(days);
-    
     acum = 0;
     for i = 1 : length(W(:,1))
        time.init(i) = acum;
@@ -37,7 +39,7 @@ function [dts,dta] = alertness_sim(ppH,days,space,noise_nat,SNR)
     
     for i = 1 : length(W(:,1))
         
-    timing = linspace(0,W(i,2),10000) + time.init(i);    
+    timing = linspace(0,W(i,2),resolution) + time.init(i);    
     
     omega_t = omega*timing(1);
     k1 = M*cos(omega_t + cphase);
@@ -49,47 +51,38 @@ function [dts,dta] = alertness_sim(ppH,days,space,noise_nat,SNR)
          (k1 + offset + k2*tau)/tau;...
           h0 + k1 + offset];
       
-    [state,t_adv] = lsim(sys,zeros(10000,1),timing - timing(1),B);
+    [state,t_adv] = lsim(sys,zeros(resolution,1),timing - timing(1),B);
     
     %Include noise to signal
+    yo = zeros(resolution,4);
+    for kn = 1 : 4
     if strcmp(noise_nat,'white')
-        e = idinput(length(state),'rgs')*std(state)*10^(-SNR/20);
-        yo = state + e;
+        e = idinput(length(state(:,kn)),'rgs')*std(state(:,kn))*10^(-SNR/20);
+        yo(:,kn) = state(:,kn) + e;
     elseif strcmp(noise_nat,'colored')
-        e = filter(1,[1 -.9],randn(length(state),4));
-        v = e*std(state)*10^(-SNR/20)/std(e);
+        e = filter(1,[1 -.9],randn(length(state(:,kn)),1));
+        v = e*std(state(:,kn))*10^(-SNR/20)/std(e);
         e = v;
-        yo = state + e;
+        yo(:,kn) = state(:,kn) + e;
     elseif strcmp(noise_nat,'noNoise')
-        yo = state;
+        yo(:,kn) = state(:,kn);
+    end
     end
     y_ = [0 0 0 1]*yo';
     
-    % Sample out
-    if strcmp(space,'random')
-        ppW = round(W(i,2)*ppH,0);
-        cruze = 2*rand(ppW,1)./ppH - 1/ppH;
-        i_cruze = round(cruze*length(y_)/W(i,2),0);
-        
-        ind = sort(abs(round(linspace(1,length(y_),ppW),0) + i_cruze'));
-    elseif strcmp(space,'linear')
-        ind = round(linspace(1,length(y_),ppW),0); 
-    end
-    
-    if ind(end) > length(y_); ind(end) = length(y_); end
-    if ind(1) <= 0; ind(1) = 1; end
-    
     %
-    dts.y{i} = y_(ind)';
-    dts.t{i} = t_adv(ind) + timing(1);  
+    dts.y{i} = y_(ind{i})';
+    dts.s{i} = yo(ind{i},:);
+    dts.t{i} = t_adv(ind{i}) + timing(1);  
     dta.yd{i} = y_';
     dta.yo{i} = ([0, 0, 0, 1]*state')';
+    dta.so{i} = state;
     dta.td{i} = timing';
     
     %figure(1)
     %plot(timing,y_,'Color',[.7 .7 .7]); hold on;
     %plot(dta.td{i},[0 0 0 1]*state','r--');
-    %scatter(dts.td{i},dts.yd{i});
+    %scatter(dts.t{i},dts.y{i});
     
     dts.dhom{i} = dts.y{i} - M*cos(omega*dts.t{i}+cphase);
     dta.dhom{i} = dta.yo{i} - M*cos(omega*dta.td{i}+cphase);
@@ -97,7 +90,7 @@ function [dts,dta] = alertness_sim(ppH,days,space,noise_nat,SNR)
     if i ~= length(W(:,1))
         hom(i,1) = dta.dhom{i}(end);
     
-        to = linspace(0,time.init(i+1)-time.final(i),1000)';
+        to = linspace(0,time.init(i+1)-time.final(i),resolution)';
         Sn = y_oo*(1-exp(-to./tau_e)) + hom(i,1)*exp(-to./tau_e);
         hom(i,2) = Sn(end);
         
