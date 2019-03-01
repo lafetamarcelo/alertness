@@ -102,7 +102,7 @@ function parameters = est_regr(dte,struc,version)
         plot(Ep,'LineWidth',1.2);
         
         ind_i = 1;
-        Phi_e = cell(length(dte.y),1);
+        Phi_e = cell(length(dte.y));
      
         for w = 1 : length(dte.y)
             
@@ -112,14 +112,14 @@ function parameters = est_regr(dte,struc,version)
                                                            t_calc,version);
             ind_i = ind_f + 1;
             
-            %for j = 1 : length(dte.y)
-            %    if j ~= w
-            %        Phi_e{w,j} = zeros(length(t_calc),4);
-            %    else
-            %        Phi_e{w,j} = sig_out(:,1:4);
-            %    end
-            %end
-            Phi_e{w} = sig_out(:,1:4);
+            for j = 1 : length(dte.y)
+                if j ~= w
+                    Phi_e{w,j} = zeros(length(t_calc),4);
+                else
+                    Phi_e{w,j} = sig_out(:,1:4);
+                end
+            end
+            %Phi_e{w} = sig_out(:,1:4);
         end
         
         Phi_it = [cell2mat(Phi) , cell2mat(Phi_e)];
