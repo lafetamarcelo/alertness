@@ -104,9 +104,8 @@ function parameters = est_regr(dte,struc,version)
     plot(Phi_t*Theta,'r--','LineWidth',1.2);
     hold off;
     
-    itt = 80;
+    itt = 50;
     J_it = zeros(itt,1);
-    Th_it = zeros(itt,1);
     Ph = cell(itt,1);
     Th = cell(itt,1);
     Th_e = cell(itt,1);
@@ -149,8 +148,6 @@ function parameters = est_regr(dte,struc,version)
         Th{it} = Theta_it(1:length(Theta));
         Th_e{it} = Theta_it(length(Theta)+1:end);
         
-        Th_it(it) = Theta_it'*Theta_it;
-        
         figure(10);
         subplot(2,1,2);
         plot(cell2mat(Y),'LineWidth',1.2); hold on; 
@@ -165,10 +162,8 @@ function parameters = est_regr(dte,struc,version)
     end
                      
     figure(19);
-    subplot(2,1,1);
+    subplot(2,1,1)
     plot(1:itt,J_it);
-    subplot(2,1,2);
-    plot(1:itt,Th_it);
     
     [~,index] = min(J_it);
     
