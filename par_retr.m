@@ -21,12 +21,12 @@ parameters.TexNames{8} = '$$\tau_{e}$$';
 Par.EstStruc.A = A;
 
 % Direct 
-%tauhat = -1/A(4,4);
+tauhat = -1/A(4,4);
 omegahat = (-A(3,4))^.5;
 
 % Combined
 % omegahat = (-A(2,4)*tauhat_)^.5;
-tauhat = 1/(-A(2,4)/omegahat^2);
+% tauhat = 1/(-A(2,4)/omegahat^2);
 
 offset = z0{1}(1)*tauhat/omegahat^2;
 
@@ -72,8 +72,8 @@ parameters.est.offset = mean(Par.EstPar(:,6));
 
 parameters.est.struc = Par.EstStruc;
 
-parameters.est.omega_ = (-A(2,4)*tauhat)^.5;
-parameters.est.tau_ =  -1/A(4,4);
+parameters.est.omega_ = abs((-A(2,4)*tauhat)^.5);
+parameters.est.tau_ = abs(1/(-A(2,4)/omegahat^2));
 %% Real parameters
 
 omega = double(pi/12); M = 2.52; tau = 1/0.0353; 

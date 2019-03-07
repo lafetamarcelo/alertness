@@ -56,19 +56,26 @@ function [dts,dta] = alertness_sim(W,noise_nat,SNR,resolution,ind)
     %Include noise to signal
     yo = zeros(resolution,4);
     for kn = 1 : 4
-    if strcmp(noise_nat,'white')
-        e = idinput(length(state(:,kn)),'rgs')*std(state(:,kn))*10^(-SNR/20);
-        yo(:,kn) = state(:,kn) + e;
-    elseif strcmp(noise_nat,'colored')
-        e = filter(1,[1 -.9],randn(length(state(:,kn)),1));
-        v = e*std(state(:,kn))*10^(-SNR/20)/std(e);
-        e = v;
-        yo(:,kn) = state(:,kn) + e;
-    elseif strcmp(noise_nat,'noNoise')
-        yo(:,kn) = state(:,kn);
+        if strcmp(noise_nat,'white')
+            e = idinput(length(state(:,kn)),'rgs')*std(state(:,kn))*10^(-SNR/20);
+            yo(:,kn) = state(:,kn) + e;
+        elseif strcmp(noise_nat,'colored')
+            e = filter(1,[1 -.6],randn(length(state(:,kn)),1));
+            v = e*std(state(:,kn))*10^(-SNR/20)/std(e);
+            e = v;
+            yo(:,kn) = state(:,kn) + e;
+        else
+            yo(:,kn) = state(:,kn);
+        end
     end
+    
+    if strcmp(noise_nat,'whiteOut')
+        aux = [0 0 0 1]*yo';
+        e = idinput(length(aux),'rgs')*std(aux)*10^(-SNR/20);
+        y_ = [0 0 0 1]*yo' + e';
+    else
+        y_ = [0 0 0 1]*yo';
     end
-    y_ = [0 0 0 1]*yo';
     
     %
     dts.y{i} = y_(ind{i})';

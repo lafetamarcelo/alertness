@@ -1,6 +1,7 @@
 
 % Symbolic nominal model
-
+clc;
+clear;
 % syms('omega','k1','k2','tau','h0','real');
 % As = [-1/tau,0,0; 0, 0,-omega^2; 0, 1, 0];
 % Bs = [h0; 1; 0];

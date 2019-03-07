@@ -11,8 +11,8 @@ rng('shuffle');
 ppH = 2;
 resolution = 10000;
 space = 'random';
-noise = 'colored';
-SNR = 40; %dB
+noise = 'white';
+SNR = 20; %dB
 
 W = autoGen(14);
 
@@ -20,7 +20,7 @@ ind = cell(length(W(:,1)),1);
 for i = 1 : length(W(:,1))
 if strcmp(space,'random')
     ppW = round(W(i,2)*ppH,0);
-    cruze = 2*rand(ppW,1)./ppH - 1/ppH;
+    cruze = .5*rand(ppW,1)./ppH - 1/ppH;
     i_cruze = round(cruze*resolution/W(i,2),0);
     
     ind{i} = unique(sort(abs(round(linspace(1,resolution,ppW),0) + i_cruze')));

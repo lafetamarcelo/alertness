@@ -30,9 +30,7 @@ function parameters = est_regr(dte,struc,version,method)
         %plot(error_graph,'Color',[.7 .7 .7]);
         
         Phi{w,2} = puls_out(ind(2:end),1);
-        Phi_iv{w,2} = puls_out(ind,1);
         X = puls_out(ind(2:end),2:4);
-        X_iv = puls_out(ind,2:4);
         
         % y(t) filtering - Output [L] informations
         t_calc = dte.t{w}-dte.t{w}(1);
@@ -52,7 +50,6 @@ function parameters = est_regr(dte,struc,version,method)
         %plot(error_graph,'Color',[.4 .4 .4]);
         
         Phi{w,1} = [zeros(length(ind(2:end)),1),sig_out(ind(2:end),2:4)];
-        Phi_iv{w,1} = [zeros(length(ind),1),sig_out(ind,2:4)];
         
         Y{w} = dte.y{w}(2:end);
         Yr{w} = sig_out(ind(2:end),5);
@@ -61,10 +58,8 @@ function parameters = est_regr(dte,struc,version,method)
         for j = 1 : wind_s
             if w == j
                 Phi{w,j+2} = X(:,1:3);
-                Phi_iv{w,j+2} = X_iv(:,1:3);
             else
                 Phi{w,j+2} = zeros(length(Phi{w,1}),3);
-                Phi_iv{w,j+2} = zeros(length(Phi_iv{w,1}),3);
             end
         end
         
@@ -111,8 +106,8 @@ function parameters = est_regr(dte,struc,version,method)
             %[sig_out,~] =  sim_vs(reg_filt,0,-Ep(ind_i:ind_f),...
             %                                               t_calc,version);
 
-            %e = Ep(ind_i:ind_f);
-            %sig_out = [[zeros(1,1); e(1:end-1)], ...
+            e = Ep(ind_i:ind_f);
+            sig_out = [[zeros(1,1); e(1:end-1)]];%, ...
                         %[zeros(2,1); e(1:end-2)]];%,...
                          %[zeros(3,1); e(1:end-3)],...
                          %[zeros(4,1); e(1:end-4)]];
@@ -131,27 +126,27 @@ function parameters = est_regr(dte,struc,version,method)
         J_it(iter,2) = (cell2mat(Y) - cell2mat(Phi)*Theta_it(1:length(Theta)))'*...
                        (cell2mat(Y) - cell2mat(Phi)*Theta_it(1:length(Theta)))/length(cell2mat(Y));
         
-        %% Figures generation
-        figure(10);
-        subplot(2,1,1);
-        plot(Ep,'LineWidth',1.4,'Color',[.8 .8 .8]); hold on;
-        plot(cell2mat(Phi_e)*Theta_it(length(Theta)+1:end),...
-                'r--','LineWidth',1.2);         
-        subplot(2,1,2);
-        plot(cell2mat(Phi)*Theta_it(1:length(Theta)),...
-                'r--','LineWidth',1.2); hold on;
-        scatter(1:length(cell2mat(Y)),cell2mat(Y),'ok','LineWidth',1.3);
-        hold off;
+        % Figures generation
+%         figure(10);
+%         subplot(2,1,1);
+%         plot(Ep,'LineWidth',1.4,'Color',[.8 .8 .8]); hold on;
+%         plot(cell2mat(Phi_e)*Theta_it(length(Theta)+1:end),...
+%                 'r--','LineWidth',1.2);         
+%         subplot(2,1,2);
+%         plot(cell2mat(Phi)*Theta_it(1:length(Theta)),...
+%                 'r--','LineWidth',1.2); hold on;
+%         scatter(1:length(cell2mat(Y)),cell2mat(Y),'ok','LineWidth',1.3);
+%         hold off;
                  
         Ep = cell2mat(Y) - Phi_it*Theta_it;
     
     end   
    
-    figure(11);
-    subplot(2,1,1);
-    plot(1:length(J_it),J_it(:,1),'LineWidth',1.6,'Color',[.8 .8 .8]);
-    subplot(2,1,2);
-    plot(1:length(J_it),J_it(:,2),'r','LineWidth',1.6);
+%     figure(11);
+%     subplot(2,1,1);
+%     plot(1:length(J_it),J_it(:,1),'LineWidth',1.6,'Color',[.8 .8 .8]);
+%     subplot(2,1,2);
+%     plot(1:length(J_it),J_it(:,2),'r','LineWidth',1.6);
       
     Theta = Theta_it(1:length(Theta));
     
@@ -213,32 +208,17 @@ function parameters = est_regr(dte,struc,version,method)
 %    Theta = [0; Theta];                      
    
    %% IV intro                        
+   if strcmp(method,'instrumental')
+       
+       y_iv = cell2mat(Phi)*Theta;
+       
+       
+       
+       
+       
+   end
     
-%     IV = cell2mat(Phi_iv)*Theta;
-%     
-%     figure(3); hold on;
-%     plot(cell2mat(dte.y),'LineWidth',1.2,'Color',[.8 .8 .8]);
-%     plot(IV,'r--');
-    
-%     Phi_iv = Phi;
-%     in = 1;
-%     
-%     for w = 1 : length(dte.y)
-%         
-%         out = in + length(dte.y{w}) - 1;
-%         iv_sig = IV(in:out);
-%         in = out + 1;
-%         
-%         t_calc = dte.t{w}-dte.t{w}(1);
-%         [sig_out,~] =  sim_vs(reg_filt,0,iv_sig,t_calc,version);
-%         
-%         Phi_iv{w,1} = [zeros(length(sig_out(2:end,1)),1),sig_out(2:end,2:4)];
-%     end
-%     
-%     Phi_iv = cell2mat(Phi_iv);
-%     
-%     Theta = (Phi_iv(:,2:end)'*Phi_t(:,2:end))\Phi_iv(:,2:end)'*cell2mat(Y);
-%     Theta = [0;Theta];
+
    %% Parameters matrix reconstruction
     
     L = Theta(1:4);

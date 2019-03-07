@@ -19,8 +19,8 @@ J = cell(MCruns,1);
 ppH = 2;
 resolution = 10000;
 space = 'random';
-noise = 'white';
-SNR = 20; %dB
+noise = 'colored';
+SNR = 40; %dB
 
 load('monte_data.mat');
 
@@ -31,7 +31,7 @@ for i = 1 : length(W(:,1))
 
 if strcmp(space,'random')
     ppW = round(W(i,2)*ppH,0);
-    cruze = .5*rand(ppW,1)./ppH - 1/ppH;
+    cruze = 2*rand(ppW,1)./ppH - 1/ppH;
     i_cruze = round(cruze*resolution/W(i,2),0);
     
     ind{i} = unique(sort(abs(round(linspace(1,resolution,ppW),0) + i_cruze')));
