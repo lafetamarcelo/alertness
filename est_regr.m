@@ -1,4 +1,4 @@
-function parameters = est_regr(dte,struc,version)
+function parameters = est_regr(dte,struc,version,method)
                                                                        
     reg_filt = ss(struc.A',struc.C',eye(4),0);
     wind_s = length(dte.y);
@@ -95,91 +95,67 @@ function parameters = est_regr(dte,struc,version)
     
     %% Introduction to residual modeling 
     
+    if strcmp(method,'extended')
+    
     Ep = cell2mat(Y) - Phi_t*Theta;
     
-    figure(10); hold on;
-    subplot(2,1,1); plot(Ep,'LineWidth',1.2);
-    subplot(2,1,2); 
-    plot(cell2mat(Y),'LineWidth',1.2); hold on; 
-    plot(Phi_t*Theta,'r--','LineWidth',1.2);
-    hold off;
+    for iter = 1 : 50
     
-    itt = 80;
-    J_it = zeros(itt,1);
-    Th_it = zeros(itt,1);
-    Ph = cell(itt,1);
-    Th = cell(itt,1);
-    Th_e = cell(itt,1);
-    for it = 1 : itt
-        
-        figure(10);
-        subplot(2,1,1); 
-        plot(Ep,'LineWidth',1.2);
-        
         ind_i = 1;
         Phi_e = cell(length(dte.y),1);
-     
+
         for w = 1 : length(dte.y)
-            
+
             t_calc = dte.t{w}(2:end) - dte.t{w}(2);
             ind_f = ind_i + length(t_calc) - 1;
-            [sig_out,~] =  sim_vs(reg_filt,0,-Ep(ind_i:ind_f),...
-                                                           t_calc,version);
-            ind_i = ind_f + 1;
-            
-            %for j = 1 : length(dte.y)
-            %    if j ~= w
-            %        Phi_e{w,j} = zeros(length(t_calc),4);
-            %    else
-            %        Phi_e{w,j} = sig_out(:,1:4);
-            %    end
-            %end
-            Phi_e{w} = sig_out(:,1:4);
-        end
-        
-        Phi_it = [cell2mat(Phi) , cell2mat(Phi_e)];
-        
-        Ph{it} = Phi_it;
-        
-        Theta_it = [0 ; Phi_it(:,2:end)\cell2mat(Y)];
-        
-        J_it(it) = (cell2mat(Y) - Phi_it*Theta_it)'*...
-                     (cell2mat(Y) - Phi_it*Theta_it)/length(cell2mat(Y));
-        
-        Th{it} = Theta_it(1:length(Theta));
-        Th_e{it} = Theta_it(length(Theta)+1:end);
-        
-        Th_it(it) = Theta_it'*Theta_it;
-        
-        figure(10);
-        subplot(2,1,2);
-        plot(cell2mat(Y),'LineWidth',1.2); hold on; 
-        plot(Phi_it(:,1:length(Theta))*Th{it},'r--','LineWidth',1.2);
-        hold off;
-        subplot(2,1,1); hold on;
-        plot(Phi_it(:,length(Theta)+1:end)*Th_e{it},'r.','LineWidth',1.2);
-        hold off;
-        
+            %[sig_out,~] =  sim_vs(reg_filt,0,-Ep(ind_i:ind_f),...
+            %                                               t_calc,version);
 
+            %e = Ep(ind_i:ind_f);
+            %sig_out = [[zeros(1,1); e(1:end-1)], ...
+                        %[zeros(2,1); e(1:end-2)]];%,...
+                         %[zeros(3,1); e(1:end-3)],...
+                         %[zeros(4,1); e(1:end-4)]];
+
+            ind_i = ind_f + 1;
+
+            Phi_e{w} = sig_out;
+        end
+
+        Phi_it = [cell2mat(Phi) , cell2mat(Phi_e)];
+
+        Theta_it = [0 ; Phi_it(:,2:end)\cell2mat(Y)];
+
+        J_it(iter,1) = (cell2mat(Y) - Phi_it*Theta_it)'*...
+                       (cell2mat(Y) - Phi_it*Theta_it)/length(cell2mat(Y));
+        J_it(iter,2) = (cell2mat(Y) - cell2mat(Phi)*Theta_it(1:length(Theta)))'*...
+                       (cell2mat(Y) - cell2mat(Phi)*Theta_it(1:length(Theta)))/length(cell2mat(Y));
+        
+        %% Figures generation
+        figure(10);
+        subplot(2,1,1);
+        plot(Ep,'LineWidth',1.4,'Color',[.8 .8 .8]); hold on;
+        plot(cell2mat(Phi_e)*Theta_it(length(Theta)+1:end),...
+                'r--','LineWidth',1.2);         
+        subplot(2,1,2);
+        plot(cell2mat(Phi)*Theta_it(1:length(Theta)),...
+                'r--','LineWidth',1.2); hold on;
+        scatter(1:length(cell2mat(Y)),cell2mat(Y),'ok','LineWidth',1.3);
+        hold off;
+                 
         Ep = cell2mat(Y) - Phi_it*Theta_it;
-    end
-                     
-    figure(19);
+    
+    end   
+   
+    figure(11);
     subplot(2,1,1);
-    plot(1:itt,J_it);
+    plot(1:length(J_it),J_it(:,1),'LineWidth',1.6,'Color',[.8 .8 .8]);
     subplot(2,1,2);
-    plot(1:itt,Th_it);
+    plot(1:length(J_it),J_it(:,2),'r','LineWidth',1.6);
+      
+    Theta = Theta_it(1:length(Theta));
     
-    [~,index] = min(J_it);
-    
-    m = size(cell2mat(Phi),2);
-    figure(20);
-    plot(cell2mat(Y)); hold on;
-    plot(Phi_it*Theta_it);
-    plot(cell2mat(Phi)*Th{index}(1:m));
-    
-    Theta = Th{itt};
-    
+    end
     %% Introduction to the regularization
 %    
 %    reg = logspace(0,10,1000);
