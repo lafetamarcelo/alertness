@@ -4,16 +4,16 @@ function parameters = est_regr(dte,struc,version,method)
     wind_s = length(dte.y);
     
     Phi = cell(wind_s,2+wind_s);
-    Phi_iv = cell(wind_s,2+wind_s);
     Y = cell(wind_s,1);
-    Yr = cell(wind_s,1);
+    t_iv = cell(wind_s,1);
+    
     %% Regression matrix
     
     for w = 1 : wind_s
         
         % Impulse filtering - Input [B] informations
         delt = dte.t{w}(end)-dte.t{w}(1);
-        step_t = .0001;%*min(diff(dte.t{w}));
+        step_t = .0001;
         puls_time = 0:step_t:delt;
         puls_out = impulse(reg_filt,puls_time);
         
@@ -23,11 +23,8 @@ function parameters = est_regr(dte,struc,version,method)
            [~,ind(i)] = min(error);
            
            % simulated time error plotting
-           error_graph(i) = min(error);
+           %error_graph(i) = min(error);
         end
-        
-        %figure(2); subplot(2,1,1); hold on;
-        %plot(error_graph,'Color',[.7 .7 .7]);
         
         Phi{w,2} = puls_out(ind(2:end),1);
         X = puls_out(ind(2:end),2:4);
@@ -43,7 +40,7 @@ function parameters = est_regr(dte,struc,version,method)
            [~,ind(i)] = min(error);
            
            % simulated time error plotting
-           error_graph(i) = error(ind(i));
+           %error_graph(i) = error(ind(i));
         end
         
         %figure(2); subplot(2,1,2); hold on;
@@ -52,7 +49,7 @@ function parameters = est_regr(dte,struc,version,method)
         Phi{w,1} = [zeros(length(ind(2:end)),1),sig_out(ind(2:end),2:4)];
         
         Y{w} = dte.y{w}(2:end);
-        Yr{w} = sig_out(ind(2:end),5);
+        t_iv{w} = dte.t{w}(2:end);
         
         % Shifting the window information
         for j = 1 : wind_s
@@ -103,18 +100,18 @@ function parameters = est_regr(dte,struc,version,method)
 
             t_calc = dte.t{w}(2:end) - dte.t{w}(2);
             ind_f = ind_i + length(t_calc) - 1;
-            %[sig_out,~] =  sim_vs(reg_filt,0,-Ep(ind_i:ind_f),...
-            %                                               t_calc,version);
+            [sig_out,~] =  sim_vs(reg_filt,0,Ep(ind_i:ind_f),...
+                                                           t_calc,version);
 
-            e = Ep(ind_i:ind_f);
-            sig_out = [[zeros(1,1); e(1:end-1)]];%, ...
+            %e = Ep(ind_i:ind_f);
+            %sig_out = [[zeros(1,1); e(1:end-1)]];%, ...
                         %[zeros(2,1); e(1:end-2)]];%,...
                          %[zeros(3,1); e(1:end-3)],...
                          %[zeros(4,1); e(1:end-4)]];
 
             ind_i = ind_f + 1;
 
-            Phi_e{w} = sig_out;
+            Phi_e{w} = sig_out(:,1:4);
         end
 
         Phi_it = [cell2mat(Phi) , cell2mat(Phi_e)];
@@ -125,96 +122,62 @@ function parameters = est_regr(dte,struc,version,method)
                        (cell2mat(Y) - Phi_it*Theta_it)/length(cell2mat(Y));
         J_it(iter,2) = (cell2mat(Y) - cell2mat(Phi)*Theta_it(1:length(Theta)))'*...
                        (cell2mat(Y) - cell2mat(Phi)*Theta_it(1:length(Theta)))/length(cell2mat(Y));
-        
-        % Figures generation
-%         figure(10);
-%         subplot(2,1,1);
-%         plot(Ep,'LineWidth',1.4,'Color',[.8 .8 .8]); hold on;
-%         plot(cell2mat(Phi_e)*Theta_it(length(Theta)+1:end),...
-%                 'r--','LineWidth',1.2);         
-%         subplot(2,1,2);
-%         plot(cell2mat(Phi)*Theta_it(1:length(Theta)),...
-%                 'r--','LineWidth',1.2); hold on;
-%         scatter(1:length(cell2mat(Y)),cell2mat(Y),'ok','LineWidth',1.3);
-%         hold off;
                  
         Ep = cell2mat(Y) - Phi_it*Theta_it;
     
     end   
    
-%     figure(11);
-%     subplot(2,1,1);
-%     plot(1:length(J_it),J_it(:,1),'LineWidth',1.6,'Color',[.8 .8 .8]);
-%     subplot(2,1,2);
-%     plot(1:length(J_it),J_it(:,2),'r','LineWidth',1.6);
-      
     Theta = Theta_it(1:length(Theta));
     
     end
-    %% Introduction to the regularization
-%    
-%    reg = logspace(0,10,1000);
-%    
-%    Phi_t = Phi_t(:,2:end);
-%    
-%    I = eye(size(Phi_t,2));
-%    Jreg = zeros(length(reg),1);
-%    for k = 1 : length(reg)
-%                            
-%      Theta = (Phi_t'*Phi_t + reg(k)*I)\Phi_t'*cell2mat(Y);                    
-%      Theta = [0; Theta];                      
-%      
-%      L = Theta(1:4);
-%      B = cell(wind_s,1);
-%      for i = 1 : wind_s
-%         B{i}(1) = Theta(5); 
-%         B{i}(2) = Theta(6+3*(i-1)); 
-%         B{i}(3) = Theta(7+3*(i-1));
-%         B{i}(4) = Theta(8+3*(i-1));
-%      end
-%      A = struc.A + L*struc.C;
-%      
-%      par = par_retr(A,B,dte);
-%      
-%      y_c = cell(length(dte.valid.y),1);
-%      for w = 1 : length(dte.valid.y)
-%         time.init = dte.valid.t{w}(1);
-%         time.final = dte.valid.final(w);
-%         initial = dte.valid.y{w}(1);
-% 
-%         dts = sim_system(par,time,initial);
-%         
-%         ind = zeros(length(dte.valid.y{w}),1);
-%         for i = 1 : length(ind)
-%             error = abs(dte.valid.t{w}(i) - dts.td{1});
-%             [~, ind(i)] = min(error);
-%         end
-%         
-%         y_c{w} = dts.yd{1}(ind);
-%      end
-%      E = cell2mat(y_c) - cell2mat(dte.valid.y);
-%      
-%      Jreg(k) = (E'*E)/length(E);
-%    end 
-%    
-%    figure(15); 
-%    plot(reg,Jreg); hold on; set(gca, 'XScale', 'log', 'YScale', 'log')
-%    
-%    [~, ind_reg] = min(Jreg);
-%    
-%    reg_candy = reg(ind_reg);
-%    
-%    Theta = (Phi_t'*Phi_t + reg_candy*I)\Phi_t'*cell2mat(Y);                    
-%    Theta = [0; Theta];                      
-   
+
    %% IV intro                        
    if strcmp(method,'instrumental')
        
        y_iv = cell2mat(Phi)*Theta;
+       y_reg = cell2mat(Y);
+       Phi_iv = Phi;
        
+       tstp = cell2mat(t_iv);
        
+       for w = 1 : length(dte.y)
+           
+            t_calc = dte.t{w}(2:end)-dte.t{w}(2);
+            index = find((tstp >= t_iv{w}(1)).*(tstp <= t_iv{w}(end)));
+            Y{w} = y_reg(index(2:end));
+            
+            [sig_out,t_out] =  sim_vs(reg_filt,0,y_iv(index),...
+                t_calc,version);
+            %sig_out = lsim(reg_filt,dte.y{w},puls_time(ind));
+            
+            ind = zeros(length(dte.t{w})-1,1);
+            for i = 2 : length(dte.t{w})
+               error = abs(t_out - (dte.t{w}(i) - dte.t{w}(2)));
+               [~,ind(i-1)] = min(error);
+
+               % simulated time error plotting
+               %error_graph(i) = error(ind(i));
+            end
+
+            Phi_iv{w,1} = [zeros(length(ind(2:end)),1),...
+                                                sig_out(ind(2:end),2:4)];
+            Phi{w,1} = Phi{w,1}(2:end,:);                                
+            
+            
+            
+            for j = 2 : size(Phi_iv,2)
+               Phi_iv{w,j} = Phi_iv{w,j}(2:end,:);
+               Phi{w,j} = Phi{w,j}(2:end,:);
+            end
+            
+       end
        
+       Z = cell2mat(Phi_iv);
+       Phi_t = cell2mat(Phi);
        
+       Theta = (Z(:,2:end)'*Phi_t(:,2:end))\Z(:,2:end)'*cell2mat(Y);
+       
+       Theta = [0; Theta];
        
    end
     
@@ -233,52 +196,6 @@ function parameters = est_regr(dte,struc,version,method)
     
     A = struc.A + L*struc.C;
     
-    %% Just for DEBUG
-    
-%     load('rTHETA.mat')
-%     rL = (model.A - struc.A)*pinv(model.C);
-%     
-%     % Parameters determination
-%     M = model.p.M;
-%     cphase = model.p.cphase;
-%     omega = model.p.omega;
-%     offset = model.p.offset;
-%     tau = model.p.tau;
-%     tau_e = model.p.tau_e;
-%     y_oo = model.p.y_oo;
-%     
-%     
-%     rTheta = rL;
-%     y_r = cell(length(dte.y),1);
-%     for i = 1 : length(dte.y)
-%         omega_t = omega*dte.t{i}(1);
-%         k1 = M*cos(omega_t + cphase);
-%         k2 = -M*sin(omega_t + cphase)*omega;
-%         h0 = dte.y{i}(1) - k1 - offset;
-% 
-%         rB = [(offset*omega^2)/tau;...
-%            (k2 + h0*omega^2*tau + offset*omega^2*tau)/tau;...
-%            (k1 + offset + k2*tau)/tau;...
-%             h0 + k1 + offset];
-%         
-%         if i~=1
-%             rTheta = [rTheta;rB(2:end)];
-%         else
-%             rTheta = [rTheta;rB];
-%         end
-%         
-%         y_r{i} = dte.y{i}(2:end);
-%     end 
-%     
-%     J_comp = (cell2mat(Y) - cell2mat(Phi)*rTheta)'*(cell2mat(Y) ...
-%                                - cell2mat(Phi)*rTheta)/length(cell2mat(Y));
-%     
-%     J_real = (cell2mat(y_r) - cell2mat(Phi)*rTheta)'*(cell2mat(y_r) ...
-%                               - cell2mat(Phi)*rTheta)/length(cell2mat(y_r));
-%                           
-%     rPhi = cell2mat(y_r)*pinv(rTheta);
-%     
-%     error_Phi = cell2mat(Phi) - rPhi;
     %% Retrieve the model parameters
                   
     par = par_retr(A,B,dte);    
@@ -318,19 +235,7 @@ function parameters = est_regr(dte,struc,version,method)
             h.y{k-1}(1,1) = dts.hom{k-1}(end);
             h.y{k-1}(1,2) = dts.hom{k}(1);
             h.t{k-1}(1,1) = dts.t{k}(1) - dts.t{k-1}(end); 
-            %%DEBUG figure
-            %subplot(3,1,3); hold on;
-            %scatter(dts.t{k-1}(end),h.y{k-1}(1,1),'xr','LineWidth',1.8);
-            %scatter(dts.t{k}(1),h.y{k-1}(1,2),'or','LineWidth',1.8);
         end
-        
-        %% Just for DEBUG
-%         figure(3); subplot(3,1,1); hold on;
-%         plot(dts.t{k},dts.y{k},'k-','LineWidth',1.2);
-%         subplot(3,1,2); hold on;
-%         plot(dts.t{k},dts.circ{k},'k-','LineWidth',1.2);
-%         subplot(3,1,3); hold on;
-%         plot(dts.t{k},dts.hom{k},'k-','LineWidth',1.2);
     end
     
     %% Estimate the night parameters

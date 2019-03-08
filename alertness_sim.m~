@@ -61,22 +61,24 @@ function [dts,dta] = alertness_sim(W,noise_nat,SNR,resolution,ind)
     % Include noise to signal
     yo = zeros(resolution,4);
     for kn = 1 : 4
-        if strcmp(noise_nat,'white') && (kn ~= 1)
-            e = idinput(length(state(:,kn)),'rgs')*std(state(:,kn))*10^(-SNR/20);
-            yo(:,kn) = state(:,kn) + e;
-            %yo(:,kn) = awgn(state(:,kn),SNR,'measured');
-            %e = yo(:,kn) - state(:,kn);
+        if strcmp(noise_nat,'white')
+            %e = idinput(length(state(:,kn)),'rgs')*std(state(:,kn))*10^(-SNR/20);
+            %yo(:,kn) = state(:,kn) + e;
+            yo(:,kn) = awgn(state(:,kn),SNR,'measured');
+            e = yo(:,kn) - state(:,kn);
             dta.SNR(i,kn) = snr(state(:,kn),e);
-        elseif strcmp(noise_nat,'colored') && (kn ~= 1)
-            e = filter(1,[1 -.9],randn(length(state(:,kn)),1));
+            figure(kn);
+            subplot(2,1,1);
+            plot(yo(:,kn)); hold on;
+            plot(state(:,kn),'r--');
+            subplot(2,1,2);
+            plot(e);
+            hold off;
+        elseif strcmp(noise_nat,'colored')
+            e = filter(1,[1 -.6],randn(length(state(:,kn)),1));
             v = e*std(state(:,kn))*10^(-SNR/20)/std(e);
-%             figure(kn);
-%             subplot(2,1,1);
-%             plot(randn(length(state(:,kn)),1)); hold on;
-%             plot(e); hold off;
-%             subplot(2,1,2);
-%             plot(v); hold off;
-            yo(:,kn) = state(:,kn) + v;
+            e = v;
+            yo(:,kn) = state(:,kn) + e;
         else
             yo(:,kn) = state(:,kn);
         end
@@ -85,7 +87,6 @@ function [dts,dta] = alertness_sim(W,noise_nat,SNR,resolution,ind)
     if strcmp(noise_nat,'whiteOut')
         aux = [0 0 0 1]*yo';
         e = idinput(length(aux),'rgs')*std(aux)*10^(-SNR/20);
-        %y_ = awgn(aux,SNR,'measured');
         y_ = [0 0 0 1]*yo' + e';
     else
         y_ = [0 0 0 1]*yo';
@@ -98,7 +99,7 @@ function [dts,dta] = alertness_sim(W,noise_nat,SNR,resolution,ind)
     
     dta.yd{i} = y_';
     dta.yo{i} = ([0, 0, 0, 1]*state')';
-    dta.SNRout{i} = snr(dta.yo{i},dta.yd{i} - dta.yo{i});
+    dta.SNRout{i} = snr(yo{i})
     dta.so{i} = state;
     dta.td{i} = timing';
     

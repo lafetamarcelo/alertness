@@ -8,7 +8,7 @@ set(0,'defaultfigurecolor',[1 1 1]);
 
 MCruns = 100;
 
-SNR_ = zeros(MCruns,3);
+SNR_ = zeros(MCruns,4);
 noise_sig = cell(MCruns,1);
 par = cell(MCruns,1);
 struc = cell(MCruns,1);
@@ -19,12 +19,12 @@ J = cell(MCruns,1);
 ppH = 2;
 resolution = 10000;
 space = 'random';
-noise = 'white';
-SNR = 20; %dB
+noise = 'colored';
+SNR = 40; %dB
 
-load('monte_data.mat');
+%load('monte_data.mat');
 
-% W = autoGen(35);
+W = autoGen(35);
 
 ind = cell(length(W(:,1)),1);
 for i = 1 : length(W(:,1))
@@ -52,17 +52,7 @@ for mc = 1 : MCruns
     
     [dtd,dta] = alertness_sim(W,noise,SNR,resolution,ind);
     
-    aux = zeros(1,4);
-    for j = 1 : length(dtd.y)
-        aux = [aux; dta.so{j}(ind{j},:)]; 
-    end
-    aux = aux(2:end,:);
-    noise_sig{mc} = cell2mat(dtd.s) - aux;
-    
-    for i = 1 : 4
-    signal = cell2mat(noise_sig);
-    SNR_(mc,i) = 10*log10(sum(aux(:,i).*aux(:,i))/sum(signal(:,i).*signal(:,i)));
-    end
+    SNR_(mc,:) = mean(dta.SNR(:,1:4));
     
     est_d = 7;
     
@@ -73,7 +63,7 @@ for mc = 1 : MCruns
     
     struc{mc} = struc_select('trivial',dte);
     
-    par{mc} = est_regr(dte,struc{mc},'16','extended');
+    par{mc} = est_regr(dte,struc{mc},'16','instrumental');
 
     time.init = [dte.valid.t{1}(1), dte.valid.init(2:end)];
     time.final = dte.valid.final;
