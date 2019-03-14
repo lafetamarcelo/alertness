@@ -11,26 +11,28 @@ rng('shuffle');
 ppH = 2;
 resolution = 10000;
 space = 'random';
-noise = 'white';
+noise = 'noNoise';
 SNR = 20; %dB
 
-W = autoGen(14);
+load('monte_data.mat');
 
-ind = cell(length(W(:,1)),1);
-for i = 1 : length(W(:,1))
-if strcmp(space,'random')
-    ppW = round(W(i,2)*ppH,0);
-    cruze = .5*rand(ppW,1)./ppH - 1/ppH;
-    i_cruze = round(cruze*resolution/W(i,2),0);
-    
-    ind{i} = unique(sort(abs(round(linspace(1,resolution,ppW),0) + i_cruze')));
-elseif strcmp(space,'linear')
-    ind{i} = unique(round(linspace(1,resolution,ppW),0)); 
-end
-
-if ind{i}(end) > resolution; ind{i}(end) = resolution; end
-if ind{i}(1) <= 0; ind{i}(1) = 1; end
-end
+% W = autoGen(14);
+% 
+% ind = cell(length(W(:,1)),1);
+% for i = 1 : length(W(:,1))
+% if strcmp(space,'random')
+%     ppW = round(W(i,2)*ppH,0);
+%     cruze = .5*rand(ppW,1)./ppH - 1/ppH;
+%     i_cruze = round(cruze*resolution/W(i,2),0);
+%     
+%     ind{i} = unique(sort(abs(round(linspace(1,resolution,ppW),0) + i_cruze')));
+% elseif strcmp(space,'linear')
+%     ind{i} = unique(round(linspace(1,resolution,ppW),0)); 
+% end
+% 
+% if ind{i}(end) > resolution; ind{i}(end) = resolution; end
+% if ind{i}(1) <= 0; ind{i}(1) = 1; end
+% end
 
 %% Simulate the alertness level
 
@@ -62,7 +64,7 @@ struc = struc_select('trivial',dte);
 
 %% Estimate parameters
 
-parameters = est_regr(dte,struc,'16');
+parameters = est_regr(dte,struc,'16','ls');
 
 %% Simulate the validation data--set
 
