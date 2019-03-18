@@ -21,12 +21,12 @@ parameters.TexNames{8} = '$$\tau_{e}$$';
 Par.EstStruc.A = A;
 
 % Direct 
-tauhat = -1/A(4,4);
+%tauhat = -1/A(4,4);
 omegahat = (-A(3,4))^.5;
 
 % Combined
 % omegahat = (-A(2,4)*tauhat_)^.5;
-% tauhat = 1/(-A(2,4)/omegahat^2);
+ tauhat = 1/(-A(2,4)/omegahat^2);
 
 offset = z0{1}(1)*tauhat/omegahat^2;
 

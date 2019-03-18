@@ -1,4 +1,4 @@
-%%Monte Carlo MOLI runs
+%% Monte Carlo MOLI runs
 %% Default config
 %close all;
 clear;
@@ -6,7 +6,7 @@ clc;
 set(0,'defaultfigurecolor',[1 1 1]);
 %% Initialize variables and set the Monte Carlo configurations
 
-MCruns = 100;
+MCruns = 200;
 
 SNR_ = zeros(MCruns,4);
 noise_sig = cell(MCruns,1);
@@ -22,27 +22,26 @@ space = 'random';
 noise = 'colored';
 SNR = 40; %dB
 
-load('monte_data.mat');
+%load('monte_data.mat');
 
-% W = autoGen(35);
-% 
-% ind = cell(length(W(:,1)),1);
-% for i = 1 : length(W(:,1))
-% 
-% if strcmp(space,'random')
-%     ppW = round(W(i,2)*ppH,0);
-%     cruze = .5*rand(ppW,1)./ppH - 1/ppH;
-%     i_cruze = round(cruze*resolution/W(i,2),0);
-%     
-%     ind{i} = unique(sort(abs(round(linspace(1,resolution,ppW),0) + i_cruze')));
-% elseif strcmp(space,'linear')
-%     ind{i} = unique(round(linspace(1,resolution,ppW),0)); 
-% end
-% 
-% if ind{i}(end) > resolution; ind{i}(end) = resolution; end
-% if ind{i}(1) <= 0; ind{i}(1) = 1; end
-% end
+W = autoGen(35);
 
+ind = cell(length(W(:,1)),1);
+for i = 1 : length(W(:,1))
+
+if strcmp(space,'random')
+    ppW = round(W(i,2)*ppH,0);
+    cruze = .5*rand(ppW,1)./ppH - 1/ppH;
+    i_cruze = round(cruze*resolution/W(i,2),0);
+    
+    ind{i} = unique(sort(abs(round(linspace(1,resolution,ppW),0) + i_cruze')));
+elseif strcmp(space,'linear')
+    ind{i} = unique(round(linspace(1,resolution,ppW),0)); 
+end
+
+if ind{i}(end) > resolution; ind{i}(end) = resolution; end
+if ind{i}(1) <= 0; ind{i}(1) = 1; end
+end
 %% Initialize the Monte Carlo Simulations
 
 n_s = 1;
@@ -133,10 +132,14 @@ E_b1 = cell(MCruns,length(dte.y)); E_b2 = E_b1; E_b3 = E_b1; E_b4 = E_b1;
 for mc = 1 : MCruns
     
     for j = 1 : length(dte.y)
-        E_b1{mc,j} = abs(par{mc}.real.struc.B{j}(1) - par{mc}.est.struc.B{j}(1))./abs(par{mc}.real.struc.B{j}(1));
-        E_b2{mc,j} = abs(par{mc}.real.struc.B{j}(2) - par{mc}.est.struc.B{j}(2))./abs(par{mc}.real.struc.B{j}(2));
-        E_b3{mc,j} = abs(par{mc}.real.struc.B{j}(3) - par{mc}.est.struc.B{j}(3))./abs(par{mc}.real.struc.B{j}(3));
-        E_b4{mc,j} = abs(par{mc}.real.struc.B{j}(4) - par{mc}.est.struc.B{j}(4))./abs(par{mc}.real.struc.B{j}(4));
+        E_b1{mc,j} = abs(par{mc}.real.struc.B{j}(1) - ...
+            par{mc}.est.struc.B{j}(1))./abs(par{mc}.real.struc.B{j}(1));
+        E_b2{mc,j} = abs(par{mc}.real.struc.B{j}(2) - ...
+            par{mc}.est.struc.B{j}(2))./abs(par{mc}.real.struc.B{j}(2));
+        E_b3{mc,j} = abs(par{mc}.real.struc.B{j}(3) - ...
+            par{mc}.est.struc.B{j}(3))./abs(par{mc}.real.struc.B{j}(3));
+        E_b4{mc,j} = abs(par{mc}.real.struc.B{j}(4) - ...
+            par{mc}.est.struc.B{j}(4))./abs(par{mc}.real.struc.B{j}(4));
     end
     
     for i = 1 : 4
@@ -147,20 +150,36 @@ for mc = 1 : MCruns
             E_a(mc,i) = (par{mc}.real.struc.A(i,4)...
                             - par{mc}.est.struc.A(i,4))./...
                                     abs(par{mc}.real.struc.A(i,4));
+            Hist(mc,i-1) = par{mc}.est.struc.A(i,4);
         end
     end
 end
 
 %% Plotting parameters error results
+%% Pltting the normalized quadratic error histogram
 figure(9); hold on;
 histogram(cell2mat(J),20);
 title(['$$\overline{x} =',num2str(round(mean(cell2mat(J)),3)),...
      '\pm',num2str(round(std(cell2mat(J)),3)),'$$'],'Interpreter','latex');
 
+%% Ploting the \omega, \tau, \phi, M parameters error histogram
 figure(10); hold on;
-for k = 1 : 8
-    subplot(2,4,k); hold on;
-    histogram(E(:,k),20); hold on;
+for k = 1 : 4
+    subplot(4,1,k); hold on;
+    histogram(E(:,k),20,'EdgeColor',[.6 .6 .6], 'FaceColor',[.6 .6 .6]); 
+    hold on;
+    title(['$$\overline{x} =',num2str(round(mean(E(:,k)),3)),...
+          '\pm',num2str(round(std(E(:,k)),3)),'$$'],'Interpreter','latex');
+    leg = par{1}.TexNames{k};
+    legend([{leg}],'Interpreter','latex'); hold off;
+end
+
+%% Ploting the DC, s_s(\infty) and \tau_e error histogram
+figure(11); hold on;
+for k = 6 : 8
+    subplot(4,1,k-5); hold on;
+    histogram(E(:,k),20,'EdgeColor',[.6 .6 .6], 'FaceColor',[.6 .6 .6]); 
+    hold on;
     title(['$$\overline{x} =',num2str(round(mean(E(:,k)),3)),...
           '\pm',num2str(round(std(E(:,k)),3)),'$$'],'Interpreter','latex');
     leg = par{1}.TexNames{k};
@@ -168,7 +187,8 @@ for k = 1 : 8
     legend([{leg}],'Interpreter','latex'); hold off;
 end
 
-figure(11); hold on;
+%% Ploting the DC + h(0) error histogram
+figure(12); hold on;
 histogram(E(:,9),20); hold on;
 title(['$$\overline{x} =',num2str(round(mean(E(:,9)),3)),...
          '\pm',num2str(round(std(E(:,9)),3)),'$$'],'Interpreter','latex');
@@ -176,7 +196,8 @@ leg = 'DC + h(0)';
 %xlim([-100,100]);
 legend([{leg}],'Interpreter','latex'); hold off;
 
-figure(12); hold on;
+%% Ploting the A matrix parameters histogram
+figure(13); hold on;
 for i = 1 : 4
     subplot(2,2,i); 
     histogram(E_a(:,i),20); hold on;
@@ -186,8 +207,8 @@ for i = 1 : 4
     xlim([-.5,.5]); hold off; 
 end
 
-figure(13); hold on;
-
+%% Ploting the B matrix error histograms
+figure(14); hold on;
 subplot(2,2,1); hold on;
 error = cell2mat(E_b1);
 for w = 1 : length(dte.y)
@@ -213,7 +234,8 @@ for w = 1 : length(dte.y)
 end
 hold off;
 
-figure(14); hold on;
+%% Ploting the error combination from both retrieving approaches
+figure(15); hold on;
 subplot(2,1,1);
 histogram(E_(:,1),20); hold on;
 histogram(E(:,1),20); hold on;
@@ -227,3 +249,33 @@ histogram(E_(:,2),20); hold on;
 title(['$$\overline{\tau} =',num2str(round(mean(E_(:,2)),3)),...
        '\pm',num2str(round(std(E_(:,2)),3)),'$$'],'Interpreter','latex');
 legend([{'Combined'},{'Direct'}],'Interpreter','latex'); hold off;
+
+
+%% Ploting the 3 A matrix parameters histogram and real values
+figure(16); hold on;
+for i = 1 : 3
+    subplot(3,1,i);
+    histogram(Hist(:,i),20,'FaceColor',[.8 .8 .8]); hold on;
+    title(['$$A(',num2str(i+1),') =',...
+            num2str(round(par{1}.real.struc.A(i+1,4),3)),'$$'],'Interpreter','latex');
+    d_lim = par{1}.real.struc.A(i+1,4) - abs(.5*par{1}.real.struc.A(i+1,4));
+    u_lim = par{1}.real.struc.A(i+1,4) + abs(.5*par{1}.real.struc.A(i+1,4));
+    xlim([d_lim,u_lim]);
+    hold off; 
+end
+top = 30;
+subplot(3,1,1); hold on;
+SP = par{1}.real.struc.A(2,4);
+plot([SP SP],[0 top],'--','LineWidth',1.6,'Color',[.1 .1 .1]);
+legend([{'Estimates'},{'Real value'}],'Interpreter','latex');
+hold off;
+subplot(3,1,2); hold on;
+SP = par{1}.real.struc.A(3,4);
+plot([SP SP],[0 top],'--','LineWidth',1.6,'Color',[.1 .1 .1]);
+legend([{'Estimates'},{'Real value'}],'Interpreter','latex');
+hold off;
+subplot(3,1,3); hold on;
+SP = par{1}.real.struc.A(4,4);
+plot([SP SP],[0 top],'--','LineWidth',1.6,'Color',[.1 .1 .1]);
+legend([{'Estimates'},{'Real value'}],'Interpreter','latex');
+hold off;

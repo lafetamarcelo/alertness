@@ -39,14 +39,21 @@ load('monte_data.mat');
 [dtd,dta] = alertness_sim(W,noise,SNR,resolution,ind);
 
 figure(1); 
-scatter(cell2mat(dtd.t),cell2mat(dtd.y),'r','LineWidth',1.6); hold on;
-for i = 1 : length(dta.yo)
-    plot(dta.td{i},dta.yo{i},'Color',[.7 .7 .7],'LineWidth',1.2); hold on;
+hax = axes;
+scatter(cell2mat(dtd.t(1:3)),cell2mat(dtd.y(1:3)),'r','LineWidth',1.6); hold on;
+for i = 1 : 3
+    plot(dta.td{i},dta.yo{i},'Color',[.6 .6 .6],'LineWidth',1.2); hold on;
     if i ~= length(dta.yo)
-        plot(dta.tn{i},dta.yn{i},'Color',[.7 .7 .7],'LineWidth',1.2);
+        plot(dta.tn{i},dta.yn{i},'--','Color',[.6 .6 .6],'LineWidth',1.2);
     end
+    if i ~= 1
+        SP = dta.initial(i);
+        line([SP SP],get(hax,'YLim'),'Color',[.8 .8 .8]);    
+    end
+    SP = dta.final(i);
+    line([SP SP],get(hax,'YLim'),'Color',[.8 .8 .8]);
 end
-legend([{'Sampled'},{'Real'}])
+legend([{'Samples'},{'Awake'},{'Sleeping'}])
 hold off;
 
 %% Determine the estimation and validation data

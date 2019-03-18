@@ -139,9 +139,11 @@ save('MonteCarloSim3.mat','rPar','aux_i','e_flags','TexNames');
 
 %% Figures paper
 clear all;
-load('MonteCarloSim2.mat')
+set(0,'defaultfigurecolor',[1 1 1]);
 
-i = 2;
+load('MonteCarloSim1.mat')
+
+i = 1;
 
 labels = {'Maximum constrains violation','No feasible solution','Stopped by output funtion',...
     'Iterations exceeded','Conveged to selected options','Step Tolerance stopped',...
@@ -158,25 +160,75 @@ TexNames{7} = '$$\tau_{e}$$';
 
 figure(1); hold on;
 subplot(1,3,i);
-title('20% Results','Interpreter','latex');
+title('10% Results','Interpreter','latex');
 pie(e_flags,[0, 0, 0, 0, 1, 0, 0, 0, 0],labels); hold off;
 
+Color = [.2 .2 .2];
+
 figure(2); hold on;
-for i = 1 : 7
-   subplot(4,2,i); hold on;
+for i = 1 : 4
+   subplot(4,1,i); hold on;
    e_prop = 100.*(rPar(i) - aux_i(:,i))/rPar(i); 
-   histogram(e_prop,50,'EdgeColor',[.6 .6 .6], 'FaceColor',[.6 .6 .6]); 
+   histogram(e_prop,100,'EdgeColor',Color,'FaceColor',Color); 
    hold on;
    title([TexNames{i}],'Interpreter','latex');
    hold off; 
 end
 
+figure(3); hold on;
+for i = 5 : 7
+   subplot(4,1,i-4); hold on;
+   e_prop = 100.*(rPar(i) - aux_i(:,i))/rPar(i); 
+   histogram(e_prop,100,'EdgeColor',Color,'FaceColor',Color); 
+   hold on;
+   title([TexNames{i}],'Interpreter','latex');
+   hold off; 
+end
+
+
 %%
 figure(2);
-for i = 1 : 7
-   subplot(4,2,i); hold on;
-   leg{1} = '10%';
+for i = 1 : 4
+   subplot(4,1,i); hold on;
+   leg{1} = '40%';
    leg{2} = '20%';
-   leg{3} = '40%';
+   leg{3} = '10%';
    legend([leg],'Interpreter','latex');
 end
+
+figure(3); hold on;
+for i = 5 : 7
+   subplot(4,1,i-4); hold on;
+   leg{1} = '40%';
+   leg{2} = '20%';
+   leg{3} = '10%';
+   legend([leg],'Interpreter','latex');
+end
+%%
+clear all;
+set(0,'defaultfigurecolor',[1 1 1]);
+
+load('MonteCarloSim3.mat')
+load('ML.mat');
+
+k = 3;
+
+labels = {'Maximum constrains violation','No feasible solution','Stopped by output funtion',...
+    'Iterations exceeded','Conveged to selected options','Step Tolerance stopped',...
+    'Cost function variation tolerance achieved', 'Step Tolerance to small',...
+    'Derivative direction magnitude achieved'};
+
+TexNames{1} = '$$\omega_n$$'; 
+TexNames{2} = '$$\tau$$';
+TexNames{3} = '$$M$$'; 
+TexNames{4} = '$$\phi_{c}$$'; 
+TexNames{5} = '$$A_{DC}$$'; 
+TexNames{6} = '$$y_{\infty}$$';
+TexNames{7} = '$$\tau_{e}$$';
+
+for i = 1 : 7
+   e_prop = 100.*(rPar(i) - aux_i(:,i))/rPar(i); 
+   M(i,k) = mean(e_prop);
+   S(i,k) = std(e_prop);
+end
+save ('ML.mat','M','S');
