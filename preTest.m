@@ -11,28 +11,28 @@ rng('shuffle');
 ppH = 2;
 resolution = 10000;
 space = 'random';
-noise = 'noNoise';
+noise = 'colored';
 SNR = 20; %dB
 
-load('monte_data.mat');
+%load('monte_data.mat');
 
-% W = autoGen(14);
-% 
-% ind = cell(length(W(:,1)),1);
-% for i = 1 : length(W(:,1))
-% if strcmp(space,'random')
-%     ppW = round(W(i,2)*ppH,0);
-%     cruze = .5*rand(ppW,1)./ppH - 1/ppH;
-%     i_cruze = round(cruze*resolution/W(i,2),0);
-%     
-%     ind{i} = unique(sort(abs(round(linspace(1,resolution,ppW),0) + i_cruze')));
-% elseif strcmp(space,'linear')
-%     ind{i} = unique(round(linspace(1,resolution,ppW),0)); 
-% end
-% 
-% if ind{i}(end) > resolution; ind{i}(end) = resolution; end
-% if ind{i}(1) <= 0; ind{i}(1) = 1; end
-% end
+W = autoGen(14);
+
+ind = cell(length(W(:,1)),1);
+for i = 1 : length(W(:,1))
+if strcmp(space,'random')
+    ppW = round(W(i,2)*ppH,0);
+    cruze = .5*rand(ppW,1)./ppH - 1/ppH;
+    i_cruze = round(cruze*resolution/W(i,2),0);
+    
+    ind{i} = unique(sort(abs(round(linspace(1,resolution,ppW),0) + i_cruze')));
+elseif strcmp(space,'linear')
+    ind{i} = unique(round(linspace(1,resolution,ppW),0)); 
+end
+
+if ind{i}(end) > resolution; ind{i}(end) = resolution; end
+if ind{i}(1) <= 0; ind{i}(1) = 1; end
+end
 
 %% Simulate the alertness level
 
@@ -65,9 +65,21 @@ dte.init = dtd.initial(1:est_d); dte.final = dtd.final(1:est_d);
 dte.valid.y = dtd.y(est_d+1:end); dte.valid.t = dtd.t(est_d+1:end);
 dte.valid.init = dtd.initial(est_d+1:end); dte.valid.final = dtd.final(est_d+1:end);
 
+save('test.mat');
+%%
+clear; clc;
+load('test.mat');
 %% Determine the model structure
 
-struc = struc_select('trivial',dte);
+figure(2)
+for i = 1 : length(dte.y)
+    plot(dta.td{i},dta.yo{i},'Color',[.6 .6 .6],'LineWidth',1.2); hold on;
+    if i ~= length(dta.yo)
+        plot(dta.tn{i},dta.yn{i},'--','Color',[.6 .6 .6],'LineWidth',1.2);
+    end
+end
+
+[struc,dte] = struc_select('resample',dte);
 
 %% Estimate parameters
 
