@@ -8,7 +8,7 @@ set(0,'defaultfigurecolor',[1 1 1]);
 
 rng('shuffle');
 
-ppH = 2;
+ppH = 3;
 resolution = 10000;
 space = 'random';
 noise = 'colored';
@@ -22,7 +22,7 @@ ind = cell(length(W(:,1)),1);
 for i = 1 : length(W(:,1))
 if strcmp(space,'random')
     ppW = round(W(i,2)*ppH,0);
-    cruze = .5*rand(ppW,1)./ppH - 1/ppH;
+    cruze = .1*rand(ppW,1)./ppH - .2/ppH;
     i_cruze = round(cruze*resolution/W(i,2),0);
     
     ind{i} = unique(sort(abs(round(linspace(1,resolution,ppW),0) + i_cruze')));
@@ -65,6 +65,7 @@ dte.init = dtd.initial(1:est_d); dte.final = dtd.final(1:est_d);
 dte.valid.y = dtd.y(est_d+1:end); dte.valid.t = dtd.t(est_d+1:end);
 dte.valid.init = dtd.initial(est_d+1:end); dte.valid.final = dtd.final(est_d+1:end);
 
+save('ploting.mat','dta');
 save('test.mat');
 %%
 clear; clc;
@@ -79,11 +80,11 @@ for i = 1 : length(dte.y)
     end
 end
 
-[struc,dte] = struc_select('resample',dte);
+[struc,dte] = struc_select('trivial',dte);
 
 %% Estimate parameters
 
-parameters = est_regr(dte,struc,'16','ls');
+parameters = est_regr(dte,struc,'16','extended');
 
 %% Simulate the validation data--set
 

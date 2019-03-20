@@ -100,18 +100,18 @@ function parameters = est_regr(dte,struc,version,method)
 
             t_calc = dte.t{w}(2:end) - dte.t{w}(2);
             ind_f = ind_i + length(t_calc) - 1;
-            [sig_out,~] =  sim_vs(reg_filt,0,Ep(ind_i:ind_f),...
-                                                           t_calc,version);
+            %[sig_out,~] =  sim_vs(reg_filt,0,Ep(ind_i:ind_f),...
+            %                                               t_calc,version);
 
-            %e = Ep(ind_i:ind_f);
-            %sig_out = [[zeros(1,1); e(1:end-1)]];%, ...
-                        %[zeros(2,1); e(1:end-2)]];%,...
+            e = Ep(ind_i:ind_f);
+            sig_out = [[zeros(1,1); e(1:end-1)], ...
+                        [zeros(2,1); e(1:end-2)]];%,...
                          %[zeros(3,1); e(1:end-3)],...
                          %[zeros(4,1); e(1:end-4)]];
 
             ind_i = ind_f + 1;
 
-            Phi_e{w} = sig_out(:,1:4);
+            Phi_e{w} = sig_out;%(:,1:4);
         end
 
         Phi_it = [cell2mat(Phi) , cell2mat(Phi_e)];
