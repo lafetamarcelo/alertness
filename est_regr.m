@@ -56,7 +56,7 @@ function parameters = est_regr(dte,struc,version,method)
             if w == j
                 Phi{w,j+2} = X(:,1:3);
             else
-                Phi{w,j+2} = zeros(length(Phi{w,1}),3);
+                Phi{w,j+2} = zeros(size(Phi{w,1},1),3);
             end
         end
         

@@ -1,6 +1,6 @@
 function [struc,dte] = struc_select(method,dte)
 
-load('ploting.mat','dta');
+%load('ploting.mat','dta');
 
 if strcmp(method,'trivial')
     
