@@ -1,0 +1,23 @@
+Alertness MOLI algorithm documentation ---------------------------------------*
+
+The module is included with two main functions, one called "MOLIwhiteBox" res-
+ponssible to determine the white box model parameters for a person alertness le-
+vel, and a second that can be used to simulate a generic alertness level for a
+generic person.
+
+class MOLIwhiteBox(method::string):
+'Expected to initialize the model structure as 'trivial', sets $\omega_c$ and
+$tau_c$ as $\pi/12$ and $28.32$, respectivelly.'
+    def
+
+    def fit(samples::dict):
+    'Expected to have a samples data such as:
+          samples = {'time': time samples data [I],
+                     'levAl': alertness time samples [II],
+                     'windDecisions': time awake per day [III]}
+
+    (I): is a list of numpy.array data, with length equal to the number of days
+        of the collected data, with the time infomation of each sample.
+    (II): is a list of numpy.array data, with length equal to the number of days
+        of the collected data, with the alertness infomation of each sample.
+    (III): is a list with the time awake of each day.'

@@ -1,5 +1,6 @@
 from flask import Flask, request
 from flask_restful import Resource, Api
+from matchable_observable import MOLIwhiteBox
 
 app = Flask(__name__)
 api = Api(app)
@@ -8,7 +9,7 @@ toDos = {}
 
 class ToDoSimple(Resource):
     def get(self, toDo_id):
-        send = toDos[toDo_id]
+        send = int(toDos[toDo_id]) * 2
         return {toDo_id: send}
 
     def put(self, toDo_id):
