@@ -1,27 +1,35 @@
-from flask import Flask, request
+from flask import Flask, request, jsonify
 from flask_restful import Resource, Api
+from flask_request_params import bind_request_params
 from matchable_observable import MOLIwhiteBox
 import json
 
 app = Flask(__name__)
 api = Api(app)
+app.before_request(bind_request_params)
+
+modelMOLI = MOLIwhiteBox('trivial')
 
 class ToDoSimple(Resource):
     def get(self, model_id):
-        samples = {'time': request.form['time'],
-                   'levAl': request.form['levAl'],
-                   'windDecisions': request.form['windDecisions']}
-        return samples
+        requested_data = request.params
+        sTime = {'init': json.loads(requested_data['init']),
+                 'final': json.loads(requested_data['final'])}
+
+        __init = json.loads(requested_data['lev'])
+
+        data = modelMOLI.predict(sTime, __init)
+        
+        return data
 
     def put(self, model_id):
         samples = {'time': json.loads(request.form['time']),
                    'levAl': json.loads(request.form['levAl']),
                    'windDecisions': json.loads(request.form['windDecisions'])}
-        modelMOLI = MOLIwhiteBox('trivial')
+        #modelMOLI = MOLIwhiteBox('trivial')
         modelMOLI.fit(samples)
-        return {'omega': modelMOLI.tau}
-        #toDos[toDo_id] = request.form['data']
-        #return {toDo_id: toDos[toDo_id]}
+        #self.model = modelMOLI
+        return {'omega': modelMOLI.w}
 
 api.add_resource(ToDoSimple, '/<string:model_id>')
 

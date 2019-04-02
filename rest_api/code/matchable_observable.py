@@ -180,23 +180,23 @@ class MOLIwhiteBox:
         self.tau_e = res_.x[1]
 
     def predict(self, sTime, init_): #predict on especific moments provided a initial value
-        simAl = pd.DataFrame(columns = {'dt', 'simAl', 'decision'})
-
-        for i in range(sTime.shape[0]):
+        #simAl = pd.DataFrame(columns = {'dt', 'simAl', 'decision'})
+        alert, time_alert, decision = [], [], []
+        for i in range(len(sTime['init'])):
             alSim, timeSim = np.array([]), np.array([])
 
             # determine the day time vector -- goes from the first sample until last
-            step = (sTime.loc[i,'final'] - sTime.loc[i,'init']) / 100.0
-            _time_sim = np.array([sTime.loc[i,'init'] + k*step for k in range(101)])
-            simAl.loc[i, 'decision'] = _time_sim[-1]
+            step = (sTime['final'][i] - sTime['init'][i]) / 100.0
+            _time_sim = np.array([sTime['init'][i] + k*step for k in range(101)])
+            decision.append(_time_sim[-1])
 
             alSim = np.concatenate((alSim, self.lsim(_time_sim, init_)), 0)
             timeSim = np.concatenate((timeSim, _time_sim), 0)
 
-            if i != (sTime.shape[0]-1):
+            if i != (len(sTime['init'])-1):
                 # determine the night time vector -- goes from last sample to first next day
-                step = (sTime.loc[i+1,'init'] - sTime.loc[i,'final']) / 100.0
-                time_night = np.array([sTime.loc[i,'final'] + k*step for k in range(101)])
+                step = (sTime['init'][i+1] - sTime['final'][i]) / 100.0
+                time_night = np.array([sTime['final'][i] + k*step for k in range(101)])
                 # determine the circadian during night
                 circ_night = np.asarray([self.M*cos(self.w*k + self.cphase) for k in time_night])
                 #eliminate the influence of the circadian process
@@ -210,10 +210,10 @@ class MOLIwhiteBox:
                 nightRes = np.array([])
                 time_night = np.array([])
             #concatenate the data for each window
-            simAl.loc[i,'dt'] = np.concatenate((timeSim, time_night), 0)
-            simAl.loc[i,'simAl'] = np.concatenate((alSim, nightRes), 0)
+            time_alert.append(list(np.concatenate((timeSim, time_night), 0)))
+            alert.append(list(np.concatenate((alSim, nightRes), 0)))
 
-        return simAl
+        return {'decision': decision, 'levAl': alert, 'dt': time_alert}
 
     def lsim(self, Ts, init_): # simulate the dinamic system during the awake period
         #determine the B matrix
