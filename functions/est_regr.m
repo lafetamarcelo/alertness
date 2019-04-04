@@ -254,5 +254,7 @@ function parameters = est_regr(dte,struc,version,method)
            cell2mat(h.t),y_lsq(:,1),y_lsq(:,2));
     
     par.est.y_oo = x(1); par.est.tau_e = x(2);
+    
     parameters = par;
+    
 end

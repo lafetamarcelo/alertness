@@ -11,9 +11,14 @@ for i = 1 : length(dte.t)
     plot(dte.t{i}, dte.y{i}, 'k.', 'LineWidth', 1.6);
 end
 hold off;
+
+%% Run the nonlinear least squares approach
+
+par = est_nlLeast(dte, 'genetic algorithm');
+
 %% Determine the model structure 
 
-[struc,dt] = struc_select('trivial',dte);
+[struc,dt] = struc_select('genetic',dte);
 
 %% Determine the model parameters
 
@@ -28,7 +33,7 @@ initial = dt.y{1}(1);
 % simulate the alertness level for the estimate data
 dts = sim_system(parameters,time_sam,initial);
 
-figure(1);
+figure(2);
 for i = 1 : 1%length(dts.y)
     subplot(3,1,1); hold on;
     plot(dts.td{i},dts.yd{i},'r--','LineWidth',1.6);
@@ -45,4 +50,14 @@ for i = 1 : 1%length(dts.y)
         subplot(3,1,3); hold on;
         plot(dts.tn{i},dts.nhom{i},'r--','LineWidth',1.6);    
     end
+end
+
+%% Plotting some one step ahead predictions
+
+dts = pred_system(parameters,dte);
+
+figure(3); hold on;
+for i = 1 : length(dts.t)
+     scatter(dts.t{i}, dts.y{i}, 'r', 'LineWidth', 1.2);
+     %scatter(dte.t{i}, dte.y{i}, 'k', 'LineWidth', 1.4);
 end

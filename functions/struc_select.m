@@ -17,7 +17,7 @@ if strcmp(method,'trivial')
     struc.A = [zeros(1,struc.n);[eye(struc.n-1),...
                                         flipud(-alphacand(2:end)')]]; 
     struc.C = [zeros(1,struc.n-1),1];
-    
+   
 elseif strcmp(method,'barycenter')
     
     str_att.n = 4;
@@ -113,25 +113,25 @@ elseif strcmp(method,'barycenter')
                                         flipud(-alphabary(2:end)')]];
     struc.C = [zeros(1,struc.n-1),1];
     
-elseif strcmp(method,'barycenter damped')
-    
-    str_att.n = 4;
-    str_att.C = [zeros(1,str_att.n-1), 1];
+elseif strcmp(method,'genetic')
     
     wi = pi/12;
-    tau_c = linspace(15,30,30);
+    Wc = linspace(0,5*wi,15) + wi - 5*.5*wi;
+    nii = length(Wc);
     
-    J = zeros(length(tau_c),1);
-    %aux_ii = cell(length(wc),1);
+    nx = 4;
+    J = zeros(nii,1);
+    aux = size(J);
+    norm_contfiltpoles = exp(1i*(pi*(1:2:2*nx-1)/(2*nx)+pi/2)).';
     
-    for k = 1 : length(tau_c)
+    for i = 1 : nii
         
-        str_att.A = [0 0 0 0;...
-                     1 0 0 -wi^2/tau_c(k);...
-                     0 1 0 -wi^2;...
-                     0 0 1 -1/tau_c(k)];
+        %alphacand = real(poly(exp(norm_contfiltpoles.*Wc(i)*Ts)));
+        alphacand = real(poly(norm_contfiltpoles.*Wc(i)));
         
-        %
+        str_att.A = [[zeros(1,nx-1);eye(nx-1)],fliplr(-alphacand(2:end))'];
+		str_att.C = [zeros(1,nx-1),1];
+        
         parameters = est_regr(dte,str_att,'16','ls');
 
         % Simulate the alertness level
@@ -151,35 +151,29 @@ elseif strcmp(method,'barycenter damped')
             Y{w} = dts.yd{w}(ind);
         end
         
-        %error = cell2mat(dte.y) - cell2mat(Y);
-        ye = cell2mat(dte.y); yhat = cell2mat(Y);
-        %J(k) = error'*error;
-        J(k) = min(norm(ye-yhat,2)/...
-			norm(ye-kron(mean(ye),ones(length(ye),1)),2),1);
-        disp(['Curiosity point - ',num2str(k)]);
+        error = cell2mat(dte.y) - cell2mat(Y);
+        
+        J(i) = error'*error;
+        disp(['  Curiosity point - ',num2str(i)]);
+        
     end
     
     mu = min(10/std(J),250);
-    for ii = 1:length(tau_c); aux(ii) = tau_c(ii)*exp(-mu*J(ii)); end
 	
-	barytau_c = sum(aux)./sum(exp(-mu*J));
+	for ii = 1:nii, aux(ii) = Wc(ii)*exp(-mu*J(ii)); end
+	
+    barywc = sum(aux)./sum(exp(-mu*J));
     
-    if strcmp('on','on')
-        figure(6); hold on;
-        plot(tau_c,J,'--','LineWidth',1.5); hold on;
-        plot([barytau_c barytau_c],[.001, 1],'Color',[.8 .8 .8],...
-            'LineWidth',1.5); hold on;
-        set(gca, 'YScale', 'log'); hold off;
-    end
+    alpha = real(poly(norm_contfiltpoles*barywc));
     
+    struc.A = [[zeros(1,nx-1);eye(nx-1)],fliplr(-alpha(2:end))'];
+    struc.C = [zeros(1,nx-1),1];
+    struc.n = nx;
     
-    %% 
-    struc.n = 4;
-    struc.A = [0 0 0 0;...
-               1 0 0 -wi^2/barytau_c;...
-               0 1 0 -wi^2;...
-               0 0 1 -1/barytau_c];
-    struc.C = [zeros(1,struc.n-1),1];
+    figure(6); hold on;
+    plot(Wc,J','--','LineWidth',1.5); hold on;
+    line([barywc barywc],[min(J),max(J)],'LineWidth',1.2,...
+                                                  'Color',[1 0 0]);
     
 elseif strcmp(method, 'grid filtering')
     
