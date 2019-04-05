@@ -19,11 +19,7 @@ if strcmp(method,'trivial')
     struc.C = [zeros(1,struc.n-1),1];
     
 elseif strcmp(method, 'let loose')
-    
-    struc.n = 4;
-    struc.A = [zeros(1,struc.n);[eye(struc.n-1), zeros(struc.n-1,1)]]; 
-    struc.C = [zeros(1,struc.n-1),1];
-    
+   
 elseif strcmp(method,'barycenter')
     
     str_att.n = 4;
@@ -214,7 +210,7 @@ elseif strcmp(method, 'sGolay')
         cmplt{i}(lx-m+1:lx) = yend + trend(lx-m+1:lx);
     end
     
-    figure(10); hold on;
+    figure(2); hold on;
     scatter(cell2mat(dte.t),cell2mat(dte.y),25,[.8 .8 .8]);
     for i = 1 : length(dte.y)
         plot(dte.t{i},sig{i},'k-','LineWidth',1.2); hold on;
@@ -269,7 +265,6 @@ elseif strcmp(method, 'sGolay')
     struc.n = 4;
     struc.A = [zeros(1,struc.n);[eye(struc.n-1),...
                                         flipud(-alphacand(2:end)')]]; 
-    %struc.A = [zeros(1,struc.n);[eye(struc.n-1), zeros(struc.n-1,1)]]; 
     struc.C = [zeros(1,struc.n-1),1];
     
     

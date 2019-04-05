@@ -46,7 +46,7 @@ function parameters = est_regr(dte,struc,version,method)
         %figure(2); subplot(2,1,2); hold on;
         %plot(error_graph,'Color',[.4 .4 .4]);
         
-        Phi{w,1} = [zeros(length(ind(2:end)),1),sig_out(ind(2:end),2:4)];
+        Phi{w,1} = [zeros(length(ind(2:end)),1),-sig_out(ind(2:end),2:4)];
         
         Y{w} = dte.y{w}(2:end);
         t_iv{w} = dte.t{w}(2:end);
@@ -54,7 +54,7 @@ function parameters = est_regr(dte,struc,version,method)
         % Shifting the window information
         for j = 1 : wind_s
             if w == j
-                Phi{w,j+2} = X(:,1:3);
+                Phi{w,j+2} = [X(:,1), -X(:,2), X(:,3)];
             else
                 Phi{w,j+2} = zeros(size(Phi{w,1},1),3);
             end
@@ -66,23 +66,28 @@ function parameters = est_regr(dte,struc,version,method)
     
     Phi_t = cell2mat(Phi);
     
-    Theta = [0;Phi_t(:,2:end)\cell2mat(Y)];
+    Theta = lsqnonneg(Phi_t,cell2mat(Y));
+    
+    %Theta = [0;Phi_t(:,2:end)\cell2mat(Y)];
     %Theta = Phi_t\cell2mat(Y);
     
     J = (cell2mat(Y) - cell2mat(Phi)*Theta)'*(cell2mat(Y) ...
                                 - cell2mat(Phi)*Theta)/length(cell2mat(Y));
-                              
+    
+    E = (cell2mat(Y) - cell2mat(Phi)*Theta)'*(cell2mat(Y) ...
+                                                    - cell2mat(Phi)*Theta);
+                            
     L_ = Theta(1:4);
     
     B_ = cell(wind_s,1);
     for i = 1 : wind_s
         B_{i}(1) = Theta(5); 
         B_{i}(2) = Theta(6+3*(i-1)); 
-        B_{i}(3) = Theta(7+3*(i-1));
+        B_{i}(3) = -Theta(7+3*(i-1));
         B_{i}(4) = Theta(8+3*(i-1));
     end
     
-    A_ = struc.A + L_*struc.C;
+    A_ = struc.A - L_*struc.C;
     
     par_b = par_retr(A_,B_,dte);
     
@@ -191,11 +196,11 @@ function parameters = est_regr(dte,struc,version,method)
     for i = 1 : wind_s
         B{i}(1) = Theta(5); 
         B{i}(2) = Theta(6+3*(i-1)); 
-        B{i}(3) = Theta(7+3*(i-1));
+        B{i}(3) = -Theta(7+3*(i-1));
         B{i}(4) = Theta(8+3*(i-1));
     end
     
-    A = struc.A + L*struc.C;
+    A = struc.A - L*struc.C;
     
     %% Retrieve the model parameters
                   
@@ -245,7 +250,7 @@ function parameters = est_regr(dte,struc,version,method)
     maxITER = 200;
     options = optimoptions(@lsqnonlin,'Jacobian','on',...
         'Display','off','TolFun',1e-6,'MaxIter',maxITER,'TolX',1e-6);
-    initial = [10,25];
+    initial = [14,2.5];
     
     func = @cost_function;
     y_lsq = cell2mat(h.y);

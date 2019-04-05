@@ -33,7 +33,11 @@ initial = dt.y{1}(1);
 % simulate the alertness level for the estimate data
 dts = sim_system(parameters,time_sam,initial);
 
-figure(2); hold on;
+figure(2);
+hax = axes;
+for i = 1 :
+
+
 for i = 1 : length(dts.y)
     subplot(3,1,1); hold on;
     plot(dts.td{i},dts.yd{i},'k.-','LineWidth',1.6);
@@ -59,12 +63,7 @@ for i = 1 : length(dts.y)
     if i ~= length(dts.y)
         plot(dts.tn{i},dts.yn{i},'b--','LineWidth',1.6);
     end
-    plot([dt.init(i) dt.init(i)], [2, 16],...
-                                    'Color', [.6 .6 .6], 'LineWidth', 1.2);
-    plot([dt.final(i) dt.final(i)], [2, 16],...
-                                    'Color', [.6 .6 .6], 'LineWidth', 1.2); 
 end
-
 
 %% Plotting some one step ahead predictions
 

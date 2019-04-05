@@ -22,10 +22,10 @@ Par.EstStruc.A = A;
 
 Aapoles = eig(A);
 
-tauhat = -1/Aapoles(1);
-omegahat = imag(Aapoles(2));
+tauhat = -1/real(Aapoles(3));
+omegahat = imag(Aapoles(1));
 
-% Direct 
+% % Direct 
 % tauhat = -1/A(4,4);
 % omegahat = (-A(3,4))^.5;
 
