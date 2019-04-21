@@ -189,7 +189,7 @@ function [dtd,dtn,A_] = alertness_gen(sample_rate,WL,sample_mode,force_data)
        
        % Re-structure the data to easily estimate
        dtd.y{i} = A_.Ad{i}(ind_d)'; dtd.t{i} = A_.td{i}(ind_d)';
-       dtd.initial(i) = A_.td{i}(1); dtd.final(i) = A_.td{i}(end);
+       dtd.init(i) = A_.td{i}(1); dtd.final(i) = A_.td{i}(end);
        dtn.y{i} = A_.An{i}(ind_n)'; dtn.t{i} = A_.tn{i}(ind_n)';
        A_.Ad{i} = A_.Ad{i}'; A_.td{i} = A_.td{i}';
        A_.An{i} = A_.An{i}'; A_.tn{i} = A_.tn{i}';  

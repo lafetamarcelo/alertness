@@ -1,24 +1,81 @@
-%% Using KSS/PVT on MOLI
-
 %load the data-set
 clear; close; clc;
-load('regres_01.mat');
 addpath('./functions/');
+
+%% Using simulated KSS/PVT
+
+W = autoGen(3);
+[dte,dtn,A] = alertness_gen(2, W, 'random', 'not'); 
+
+dtv.time = [[dte.t{1}(1); dte.init(2:end)'], dte.final'];
+dtv.initial = dte.y{1}(1);
+
+figure(1);
+scatter(cell2mat(dte.t), cell2mat(dte.y));
+
+% Include noise on the data
+
+
+%% Using real KSS/PVT
+
+load('regres_01.mat');
 
 figure(1); hold on;
 for i = 1 : length(dte.t)
-    plot(dte.t{i}, dte.y{i}, 'k-', 'LineWidth', 1.4);
-    plot(dte.t{i}, dte.y{i}, 'k.', 'LineWidth', 1.6);
+    scatter(dte.t{i}, dte.y{i}, 'k', 'LineWidth', 1.4);
+    %plot(dte.t{i}, dte.y{i}, 'k.', 'LineWidth', 1.6);
 end
 hold off;
 
+dtv.time = [[dte.t{1}(1); dte.init(2:end)'], dte.final'];
+dtv.initial = dte.y{1}(1);
 %% Run the nonlinear least squares approach
 
+model = alertness('Barycenter', 'least squares');
+model.fit(dte, dtv);
 %par = est_nlLeast(dte, 'genetic algorithm');
+
+%% Evalute the model performance
+dts = model.dts;
+figure(2); hold on;
+for i = 1 : length(dte.y)
+    scatter(dte.t{i}, dte.y{i}, 'k', 'LineWidth', 1.4);
+    plot(dts.dayTime{i}, dts.dayOut{i}, 'r-', 'LineWidth', 1.4);
+    if i~= length(dte.y)
+       plot(dts.nightTime{i}, dts.nightOut{i}, 'b-', 'LineWidth', 1.4); 
+    end
+end
+
+figure(3); hold on;
+for i = 1 : length(dte.y)
+   subplot(2,1,1); hold on;
+   plot(dts.dayTime{i}, dts.dayHom{i}, 'r-', 'LineWidth', 1.4);
+   subplot(2,1,2); hold on;
+   circ = dts.dayOut{i} - dts.dayHom{i};
+   plot(dts.dayTime{i}, circ, 'r-', 'LineWidth', 1.4);
+   if i ~= length(dte.y)
+      subplot(2,1,1); hold on;
+      plot(dts.nightTime{i}, dts.nightHom{i}, 'b-', 'LineWidth', 1.4);
+      subplot(2,1,2); hold on;
+      circ = dts.nightOut{i} - dts.nightHom{i};
+      plot(dts.nightTime{i}, circ, 'b-', 'LineWidth', 1.4);
+   end
+    
+    
+end
+
+
+%% 
+%%
+%%
+%% Past algorithm
+
+
+
 
 %% Determine the model structure 
 
-[struc,dt] = struc_select('sGolay',dte);
+[struc,dt] = struc_select('let loose',dte);
 
 %% Determine the model parameters
 
@@ -30,10 +87,10 @@ time_sam.init = [dt.t{1}(1), dt.init(2:end)];
 time_sam.final = dt.final;
 initial = dt.y{1}(1);
 
-% simulate the alertness level for the estimate data
+%simulate the alertness level for the estimate data
 dts = sim_system(parameters,time_sam,initial);
 
-figure(2); hold on;
+figure(3); hold on;
 for i = 1 : length(dts.y)
     subplot(3,1,1); hold on;
     plot(dts.td{i},dts.yd{i},'k.-','LineWidth',1.6);
@@ -52,7 +109,7 @@ for i = 1 : length(dts.y)
     end
 end
 
-figure(3); hold on;
+figure(4); hold on;
 scatter(cell2mat(dte.t), cell2mat(dte.y), 'r', 'LineWidth', 1.2);
 for i = 1 : length(dts.y)
     plot(dts.td{i},dts.yd{i},'k.-','LineWidth',1.6);

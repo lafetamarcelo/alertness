@@ -254,8 +254,9 @@ function parameters = est_regr(dte,struc,version,method)
     
     func = @cost_function;
     y_lsq = cell2mat(h.y);
+    lb = [8 , 1.8]; ub = [28, 3.8];
     
-    [x,~,~,~,~] = lsqnonlin(func,initial,[],[],options,...
+    [x,~,~,~,~] = lsqnonlin(func,initial,lb,ub,options,...
            cell2mat(h.t),y_lsq(:,1),y_lsq(:,2));
     
     par.est.y_oo = x(1); par.est.tau_e = x(2);
