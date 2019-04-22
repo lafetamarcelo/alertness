@@ -31,7 +31,7 @@ dtv.time = [[dte.t{1}(1); dte.init(2:end)'], dte.final'];
 dtv.initial = dte.y{1}(1);
 %% Run the nonlinear least squares approach
 
-model = alertness('sGolay filtering', 'N.N.L.S.', 'MOLI');
+model = alertness('Folkard', '', 'Folkard');
 model.fit(dte, dtv);
 %par = est_nlLeast(dte, 'genetic algorithm');
 

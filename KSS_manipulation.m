@@ -158,9 +158,42 @@ end
 %% save only interesting data
 
 dte.t = KSS.t;
+dtr.realTime = KSS.time_filt;
+dtr.timeRef = timeRef;
 dte.y = KSS.y;
 for i = 1 : length(dte.t)
    dte.init(i) = dte.t{i}(1); 
    dte.final(i) = dte.t{i}(end);
 end
-save('regres_01.mat', 'dte')
+save('regres_02.mat', 'dte');
+
+%% plot the reference for determining the initial and final for each day
+
+figure(5);
+subplot(2,1,1);
+scatter(cell2mat(KSS.t), cell2mat(KSS.y), 'ko', 'LineWidth', 1.4);
+subplot(2,1,2); hold on;
+for i = 1 : length(KSS.time_filt)
+    scatter(KSS.time_filt{i}, KSS.alert_filt{i}, 'ko', 'LineWidth', 1.4);
+end
+gInd = find(graph.time >= KSS.time_filt{1}(1));
+line([graph.time(gInd) graph.time(gInd)], [14 4],...
+                     'Color', [.6 .6 .6], 'LineWidth', 1.2);
+%% Determine with particular different initials and finals
+
+dte.t = KSS.t; dte.y = KSS.y;
+dtr.realTime = KSS.time_filt;
+dtr.timeRef = time_ref;
+removeInit = [0 4 4 5];
+addFinal = [0 0 0 0];
+
+for i =  1 : length(dte.t)
+     dte.init(i) = dte.t{i}(1) - removeInit(i);
+     dte.final(i) = dte.t{i}(end) + addFinal(i);
+     figure(5); hold on;
+     subplot(2,1,1); hold on;
+     line([dte.init(i) dte.init(i)], [14 4], 'Color', [1 0 0], 'LineWidth', 1.4);
+     line([dte.final(i) dte.final(i)], [14 4], 'Color', [0 0 1], 'LineWidth', 1.4);
+end
+%%
+save('regres_02.mat', 'dte');

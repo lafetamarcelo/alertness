@@ -31,7 +31,7 @@ classdef alertness < handle
         {'Grid search'}, {'Folkard'}];
     % Possible identification algorithms
     identPoss = [{'least squares'}, {'instrumental variable'},...
-        {'extended'}, {'LPV'}, {'N.N.L.S.'}, {''}];
+        {'extended'}, {'LPV'}, {'N.N.L.S'}, {''}];
     % Possible algorithms
     algPoss = [{'MOLI'}, {'Drived search'}, {'Folkard'}];
     % Model parameters
@@ -123,7 +123,7 @@ classdef alertness < handle
                 tOmega = obj.omega*dte.t{wii+1}(1);
                 k1 = obj.M*cos(tOmega + obj.cPhase);
                 k2 = -obj.M*sin(tOmega + obj.cPhase)*obj.omega;
-                h0 = dte.y{wii+1}(1) - k1 - obj.dc;
+                h0 = dte - k1 - obj.dc;
                 Beta = [(obj.dc*obj.omega^2)/obj.cTau;...
                     (k2/obj.cTau + h0*obj.omega^2 + obj.dc*obj.omega^2);...
                     (k1 + obj.dc + k2*obj.cTau)/obj.cTau;...
@@ -140,7 +140,7 @@ classdef alertness < handle
                 tOmega = obj.omega*dte.t{wii}(end);
                 k1 = obj.M*cos(tOmega + obj.cPhase);
                 k2 = -obj.M*sin(tOmega + obj.cPhase)*obj.omega;
-                h0 = dte.y{wii}(end) - k1 - obj.dc;
+                h0 = initialHom - k1 - obj.dc;
                 Beta = [(obj.dc*obj.omega^2)/obj.cTau;...
                     (k2/obj.cTau + h0*obj.omega^2 + obj.dc*obj.omega^2);...
                     (k1 + obj.dc + k2*obj.cTau)/obj.cTau;...
