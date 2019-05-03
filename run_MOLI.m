@@ -1,6 +1,7 @@
 %load the data-set
 clear; close all; clc;
 addpath('./functions/');
+addpath('./dataPacks/');
 
 %% Using simulated KSS/PVT
 
@@ -11,7 +12,7 @@ dtv.time = [[dte.t{1}(1); dte.init(2:end)'], dte.final'];
 dtv.initial = dte.y{1}(1);
 
 figure(1);
-scatter(cell2mat(dte.t), cell2mat(dte.y));
+scatter(cell2mat(dte.t), cell2mat(dte.y), 'ko', 'LineWidth', 1.6);
 
 % Include noise on the data
 
@@ -22,8 +23,7 @@ load('regres_02.mat');
 
 figure(1); hold on;
 for i = 1 : length(dte.t)
-    scatter(dte.t{i}, dte.y{i}, 'k', 'LineWidth', 1.4);
-    %plot(dte.t{i}, dte.y{i}, 'k.', 'LineWidth', 1.6);
+   scatter(dte.t{i}, dte.y{i}, 'k', 'LineWidth', 1.4);
 end
 hold off;
 
@@ -31,9 +31,14 @@ dtv.time = [[dte.t{1}(1); dte.init(2:end)'], dte.final'];
 dtv.initial = dte.y{1}(1);
 %% Run the nonlinear least squares approach
 
-model = alertness('sGolay filtering', 'N.N.L.S.', 'MOLI');
+preprocessing = 'None';
+structure = 'Folkard'; 
+algorithm = 'Force Compute'; 
+identification = 'Simulated Annealing'; 
+showResults = 'Sleepness'; % 'None', 'Sleepness', 'Validation'
+
+model = alertness(preprocessing, structure, algorithm, identification, showResults);
 model.fit(dte, dtv);
-%par = est_nlLeast(dte, 'genetic algorithm');
 
 %% Evalute the model performance
 dts = model.dts;
