@@ -5,8 +5,13 @@ import random as rand_
 from math import pi, cos, sin, exp, floor, atan
 from cmath import sqrt
 from scipy.signal import StateSpace, impulse2, lsim2
-from scipy.optimize import least_squares
+from scipy.optimize import least_squares, dual_annealing, basinhopping, shgo
 from scipy.linalg import lstsq
+
+import matplotlib.pyplot as plt
+from jupyterthemes import jtplot
+
+jtplot.style()
 
 
 class MOLIwhiteBox:
@@ -231,6 +236,215 @@ class MOLIwhiteBox:
         outT, outRes = impulse2(sysMOLI, T = (Ts - Ts[0]))
         return outRes
 
+class forceEstimate:
+    def __init__(self, alg):
+        self.algorithm = alg
+        self.omega = pi/12
+        self.tau = 1/0.0353
+        self.M = 2.52
+        self.phi = -16.835*pi/12.0
+        self.DC = 2.4
+        self.y_ = 14.3
+        self.tau_e = 1/0.381
+        self.initStates = [self.omega,self.tau,self.M,self.phi,self.DC]
+
+    def fit(self, samples):
+        # Get the initial alertness value and initial parameters
+        __init = samples['levAl']['0'][0]
+        __initStates = self.initStates
+        # Determine the lower and upper bounds
+        lw = [pi/24, 18, 1.52, -2*pi, 1.4] # lower bounds
+        up = [pi/6, 28, 3.52, 0, 3.4] # upper bounds
+        # Estimate the parameters with a global optimization algorithm
+        if self.algorithm == 'Annealing':
+            res = dual_annealing(self.optSim, bounds = list(zip(lw, up)),
+                            args = [samples, __init], x0 = __initStates)
+        else:
+            res = shgo(self.optSim, bounds = list(zip(lw,up)),
+                            args = [samples, __init])
+        # Determine the parameter vector theta
+        theta = res.x
+        self.omega, self.tau, self.M = theta[0], theta[1], theta[2]
+        self.phi, self.DC =  theta[3], theta[4]
+        # Estimate the night parameters
+        awaking = self.simulate_Back_Forward(samples)
+        self.sleepRegression(awaking)
+        # Simulate the alertness model
+        dataSim = self.simulate(samples, __init)
+        # Plot awaking data
+        #plt.scatter(awaking['t_s'], awaking['h_s'])
+        #plt.scatter(awaking['t_w'], awaking['h_w'])
+        #plt.plot(dataSim['time'], dataSim['wHom'])
+        #plt.plot(dataSim['nightTime'], dataSim['nHom'])
+        # Plot some results
+        for k in range(len(samples['levAl'])):
+            plt.plot(samples['time'][str(k)], samples['levAl'][str(k)],
+            'o', color = 'red')
+        plt.plot(dataSim['time'], dataSim['Al'], color = 'blue')
+        #plt.plot(dataSim['nightTime'], dataSim['nRes'])
+        plt.show()
+        # Determine the cost function for the estimated parameters
+        #cost = self.optSim(theta, samples, __init)
+        #print(cost)
+
+    def optSim(self, par, samples, __init):
+        # Simulate the system at known moments
+        dataSim = self.sySim(par, samples, __init)
+        # Get the comparison and real data for comparison
+        compAl, realAl = dataSim['compAl'], dataSim['realAl']
+        # Determine the error vector
+        error = compAl.reshape([len(compAl), 1]) - realAl.reshape([len(realAl), 1])
+        errorQuad = np.asarray([k*k for k in error]) # Quadratic error
+        return np.sum(errorQuad) # Return the quadratic sumation error
+
+    def sySim(self, par, samples, __init):
+        size_ = len(samples['time'])
+        # Initialize the parameters for simulation
+        omega, tau, M, phi, DC = par[0], par[1], par[2], par[3], par[4]
+        # Determine the initial homeostatic level and the initial time
+        tZero = samples['time']['0'][0]
+        initAl = __init - M*cos(omega * tZero + phi)
+        # Simulate the system for each window
+        for wii in range(size_):
+            ind = str(wii)
+            ##############   Simulate the day period   ########################
+            # Detemine the especific times to evaluate
+            timeGen = samples['time'][ind]
+            timeRef = [timeSamp - tZero for timeSamp in timeGen]
+            # Simulate the system at especific times
+            wCirc = [M*cos(omega*k + phi) for k in timeGen]
+            wHom = [(initAl - DC)*exp(-k/tau) + DC for k in timeRef]
+            # Simulate the system forward until sleeping moment
+            if samples['final'][wii] != timeGen[-1]:
+                tSim = samples['final'][wii] - timeGen[0]
+                __hInit = (initAl - DC)*exp(-tSim/tau) + DC
+            else:
+                __hInit = wHom[-1]
+
+            #############   Simulate the night period   #######################
+            if wii != size_ - 1: # Check if is different from last window
+                period = samples['initial'][wii + 1] - samples['final'][wii]
+                # Determine the homeostatic
+                nightHom = self.y_*(1-exp(-period/self.tau_e)) + __hInit*exp(-period/self.tau_e)
+                initAl = nightHom
+                tZero = samples['initial'][wii + 1] # Set initial time
+            # Check if is the first window to initialize the data set
+            if wii != 0:
+                aux = np.asarray(wCirc) + np.asarray(wHom)
+                compAl = np.concatenate((compAl, aux), 0)
+                realAl = np.concatenate((realAl,
+                                        np.asarray(samples['levAl'][ind])), 0)
+            else:
+                compAl = np.asarray(wCirc) + np.asarray(wHom)
+                realAl = np.asarray(samples['levAl'][ind])
+
+        return {'compAl': compAl, 'realAl': realAl}
+
+    def simulate_Back_Forward(self, samples):
+        size_ = len(samples['levAl'])
+        h = pd.DataFrame(columns = {'h_s','h_w','t_s','t_w'})
+        # Simulate back towards the awaking moment
+        for wii in range(size_):
+            # Simulate backwards
+            __init = samples['levAl'][str(wii)][0] # initial alertness
+            __initTime = samples['time'][str(wii)][0] # initial alertness time
+            initAl = __init - self.M*cos(self.omega * __initTime + self.phi)
+            # Check if is different from the initial moment and if it is the
+            # first window - first window do not simulate backward
+            if (__initTime != samples['initial'][wii]) and (wii != 0):
+                tSim = samples['initial'][wii] - __initTime
+                h.loc[wii-1,'h_w'] = (initAl - self.DC)*exp(-tSim/self.tau) + self.DC
+                h.loc[wii-1,'t_w'] = samples['initial'][wii]
+            elif (__initTime == samples['initial'][wii]) and (wii != 0):
+                h.loc[wii-1,'h_w'] = initAl
+                h.loc[wii-1,'t_w'] = samples['initial'][wii]
+
+            # Simulate forward
+            __finalTime = samples['time'][str(wii)][-1] # final alertness time
+            if (__finalTime != samples['final'][wii]) and (wii != size_ - 1):
+                tSim = samples['final'][wii] - __initTime
+                h.loc[wii,'h_s'] = (initAl - self.DC)*exp(-tSim/self.tau) + self.DC
+                h.loc[wii,'t_s'] = samples['final'][wii]
+            elif (__finalTime == samples['final'][wii]) and (wii != size_ - 1):
+                __final = samples['levAl'][str(wii)][-1]
+                __finalTime = samples['final'][wii]
+                __circ = self.M*cos(self.omega * __finalTime + self.phi)
+                h.loc[wii,'h_s'] = __final - __circ
+                h.loc[wii,'t_s'] = __finalTime
+        return h
+
+    def sleepRegression(self, hNight):
+        #non linear least squares night parameters estimation
+        #force the time to initialize at a zero reference
+        sTime = np.asarray(hNight.loc[:,'t_w'].values - hNight.loc[:,'t_s'].values)
+        #set the initial search state for the algorithm
+        init__ = np.array([14.3, 2.6])
+        aW, aS = hNight.loc[:,'h_w'].values, hNight.loc[:,'h_s'].values
+        #estimate the parameters
+        res_ = least_squares(self.cost_function, init__, args = (sTime, aS, aW))
+        self.sPar = res_
+        self.y_ = res_.x[0]
+        self.tau_e = res_.x[1]
+
+    def cost_function(self,x,sTime,sHom,wHom):
+        #cost function for the non linear least squares
+        c = [x[0]*(1-exp(-sTime[k]/x[1])) + sHom[k]*exp(-sTime[k]/x[1]) - wHom[k]
+             for k in range(sTime.size)]
+        return c
+
+    def simulate(self, samples, __init):
+        size_ = len(samples['time'])
+        # Initialize the parameters for simulation
+        omega, tau, M = self.omega, self.tau, self.M
+        phi, DC = self.phi, self.DC
+        # Determine the initial homeostatic level and the initial time
+        tZero = samples['time']['0'][0]
+        initAl = __init - M*cos(omega * tZero + phi)
+        # Simulate the system for each window
+        for wii in range(size_):
+            ind = str(wii)
+            ##############   Simulate the day period   ########################
+            period = samples['final'][wii] - tZero
+            # Detemine the especific times to evaluate
+            timeRef = [k*period/100.0 for k in range(101)]
+            timeGen = np.asarray(timeRef) + tZero
+            # Simulate the system at especific times
+            wCirc = [M*cos(omega*k + phi) for k in timeGen]
+            wHom = [(initAl - DC)*exp(-k/tau) + DC for k in timeRef]
+            #############   Simulate the night period   #######################
+            # Determine the initial night homeostatic
+            __hInit = wHom[-1]
+            if wii != size_ - 1: # Check if is different from last window
+                period = samples['initial'][wii + 1] - samples['final'][wii]
+                # Create the zero referenced time vector - homeostatic
+                nightRef = [k*period/100.0 for k in range(101)]
+                # Create the non referenced time vector - circadian
+                nightTime = np.asarray(nightRef) + samples['final'][wii]
+                # Determine the circadian
+                nightCirc = [M*cos(omega*k + phi) for k in nightTime]
+                # Determine the homeostatic
+                nightHom = [self.y_*(1-exp(-k/self.tau_e)) +
+                            __hInit*exp(-k/self.tau_e) for k in nightRef]
+                initAl = nightHom[-1]
+                tZero = nightTime[-1] # Reinitialize the initial time
+                nAl = np.asarray(nightCirc) + np.asarray(nightHom)
+                nT = nightTime
+            # Check if is the first window to initialize the data set
+            dAl = np.asarray(wCirc) + np.asarray(wHom)
+            dT = timeGen
+            if (wii != 0) and (wii != size_ - 1):
+                aux = np.concatenate((dAl, nAl), 0)
+                Al = np.concatenate((Al, aux), 0)
+                aux = np.concatenate((dT, nT), 0)
+                time = np.concatenate((time, aux), 0)
+            elif (wii == size_ - 1):
+                Al = np.concatenate((Al, dAl), 0)
+                time = np.concatenate((time, dT), 0)
+            else:
+                Al = np.concatenate((dAl, nAl), 0)
+                time = np.concatenate((dT, nT), 0)
+
+        return {'Al': Al, 'time': time}
 
 class simAlert:
     def __init__(self, numDays):
@@ -238,6 +452,8 @@ class simAlert:
         self.time = pd.DataFrame()
         self.levAl = pd.DataFrame()
         self.levHom = pd.DataFrame()
+        self.initial = pd.DataFrame()
+        self.final = pd.DataFrame()
         self.change = pd.DataFrame(columns = {'init','final'})
         self.omega = pi/12.0
         self.tau = 1/0.0353
@@ -267,6 +483,8 @@ class simAlert:
             self.levHom.loc[:,i] = Hom[:resolution]
             self.levAl.loc[:,i] = circadian[:resolution] + Hom[:resolution]
             self.time.loc[:,i] = unTime[:resolution]
+            self.initial.loc[0,i] = wTime[0] + 24 * i
+            self.final.loc[0,i] = wTime[len(wTime)-1] + 24 * i
             initAl = Hom[-1]
 
     def randSample(self,ppH,seed):
@@ -296,5 +514,7 @@ class simAlert:
         self.smpAl.levAl = levAl
         samples = { 'time' : dict(self.smpAl.time),
                     'levAl' : dict(self.smpAl.levAl),
-                    'windDecisions': self.windows}
+                    'windDecisions': self.windows,
+                    'initial': list(self.initial.values)[0].tolist(),
+                    'final': list(self.final.values)[0].tolist()}
         return (samples)
