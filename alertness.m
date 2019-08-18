@@ -156,6 +156,7 @@ classdef alertness < handle
           end
           disp('Done!')
        end
+       
        % Estimate the day parameters
        function obj = estimate(obj, dte)
            % Select the algorithm to be used
@@ -174,6 +175,7 @@ classdef alertness < handle
               error('No algorithm with such name!');
            end
        end
+       
        % Estimate the night parameters
        function obj = nonlinear_estimate(obj, dte)
            wSize = length(dte.y); h = zeros(wSize-1, 3);
@@ -651,10 +653,14 @@ classdef alertness < handle
            dtSim.initial = dte.y{1}(1);
            dtSim.y = dte.y; dtSim.t = dte.t;
            
+           % create some variables for the plot
+           global iter__  bVal__ dcurves__ ncurves__ ind__;
+           iter__ = 0; bVal__ = 0; ind__ = 1;
+           
            % Determine the initial states 
-           x0(1) = obj.omega + 0.15; x0(2) = obj.cTau - 8;
-           x0(3) = obj.M - 1;     x0(4) = obj.cPhase + 1.5;
-           x0(5) = obj.dc + .9;
+           x0(1) = obj.omega + 0.8;  x0(2) = obj.cTau - 8;
+           x0(3) = obj.M - 2;        x0(4) = obj.cPhase + 2;
+           x0(5) = obj.dc + 2;
            
            method = 'squared error';
            optimFunc = @(x) obj.simCost(x, dtSim, dte, method);
@@ -669,10 +675,10 @@ classdef alertness < handle
            obj.M = x(3);     obj.cPhase = x(4);
            obj.dc = x(5);
            
-           obj.Ao = [.0 .0 .0 .0;...
+           obj.Ao = [.0  .0 .0 .0;...
                       1. .0 .0 -obj.omega^2/obj.cTau;...
-                      .0 1. .0 -obj.omega^2;...
-                      .0 .0 1. -1/obj.cTau];
+                     .0  1. .0 -obj.omega^2;...
+                     .0  .0 1. -1/obj.cTau];
        end
        
        function obj = partSwarm(obj, dte)
@@ -753,7 +759,7 @@ classdef alertness < handle
        end
        
        function c = simCost(obj, x, dts, dte, method)
-        % Determine the cost function for the force computed
+       % Determine the cost function for the force computed
             
             obj.omega = x(1); obj.cTau = x(2);
             obj.M = x(3); obj.cPhase = x(4);
@@ -769,6 +775,10 @@ classdef alertness < handle
             
             % Determine the cost value
             c = fitnessStruc(obj, dte, dt, method);
+            
+            % Plot the results
+            plotAnnealingResults(dt, c);
+            
        end
        %% Data preprocessing
        % Data resampler

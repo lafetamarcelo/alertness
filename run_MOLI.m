@@ -2,6 +2,7 @@
 clear; close all; clc;
 addpath('./functions/');
 addpath('./dataPacks/');
+set(0,'defaultfigurecolor',[1 1 1]);
 
 %% Using simulated KSS/PVT
 
@@ -11,8 +12,9 @@ W = autoGen(3);
 dtv.time = [[dte.t{1}(1); dte.init(2:end)'], dte.final'];
 dtv.initial = dte.y{1}(1);
 
-figure(1);
-scatter(cell2mat(dte.t), cell2mat(dte.y), 'ko', 'LineWidth', 1.6);
+figure(1); hold on;
+scatter(cell2mat(dte.t), cell2mat(dte.y), 'k', 'LineWidth', 1.6);
+ylim([7,16]); hold off;
 
 % Include noise on the data
 
@@ -22,9 +24,13 @@ scatter(cell2mat(dte.t), cell2mat(dte.y), 'ko', 'LineWidth', 1.6);
 load('regres_02.mat');
 
 figure(1); hold on;
+title('Alertness level')
 for i = 1 : length(dte.t)
    scatter(dte.t{i}, dte.y{i}, 'k', 'LineWidth', 1.4);
+   ylim([4,16]);
 end
+xlabel('Time (hours)') 
+ylabel('Alertness (K.S.S.)') 
 hold off;
 
 dtv.time = [[dte.t{1}(1); dte.init(2:end)'], dte.final'];
@@ -35,7 +41,7 @@ preprocessing = 'None';
 structure = 'Folkard'; 
 algorithm = 'Force Compute'; 
 identification = 'Simulated Annealing'; 
-showResults = 'Sleepness'; % 'None', 'Sleepness', 'Validation'
+showResults = 'None'; % 'None', 'Sleepness', 'Validation'
 
 model = alertness(preprocessing, structure, algorithm, identification, showResults);
 model.fit(dte, dtv);
